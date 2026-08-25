@@ -1,107 +1,50 @@
-import { useState } from "react";
-import { trpc } from "@/lib/trpc";
-import { ArrowUpRight, Check, ChevronRight, Instagram, Mail, Menu, MapPin, Phone, Sparkles, X } from "lucide-react";
-
-const images = {
-  hero: "/manus-storage/hero-craftsmanship_afcaa625.jpg",
-  console: "/manus-storage/carved-console_af13fe5e.webp",
-  heritage: "/manus-storage/heritage-architecture_dbe621ba.jpg",
-  interiors: "/manus-storage/neutral-interiors_1abf43aa.webp",
-};
-
-export function buildInquiryMailto(name: string, email: string, project: string, message: string) {
-  const subject = encodeURIComponent(`Umaid Craftorium inquiry from ${name}`);
-  const body = encodeURIComponent(`Name: ${name}\\nEmail: ${email}\\nProject type: ${project}\\n\\nMessage:\\n${message}`);
-  return `mailto:hello@umaidcraftorium.com?subject=${subject}&body=${body}`;
-}
-
-const collections = [
-  { number: "01", title: "Statement Furniture", text: "Carved consoles, dining tables, and seating that bring quiet character to a room.", image: images.console },
-  { number: "02", title: "Decorative Objects", text: "Small-batch pieces with a tactile point of view, made to be lived with and passed on.", image: images.interiors },
-  { number: "03", title: "Bespoke Projects", text: "A considered path from a first sketch to a singular piece made for your space.", image: images.heritage },
-];
+import { Meta, SiteFrame } from "@/components/SiteLayout";
+import { ProductCard } from "@/components/ProductCard";
+import { useEnquiry } from "@/contexts/EnquiryContext";
+import { products } from "@/lib/catalog";
+import { trackIntent } from "@/lib/analytics";
+import { ArrowDownRight, ArrowRight, Check, ChevronRight, Globe2, Layers3, Sparkles } from "lucide-react";
+import { Link } from "wouter";
 
 export default function Home() {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [inquiryState, setInquiryState] = useState<"idle" | "submitting" | "success" | "error">("idle");
-  const createInquiry = trpc.inquiries.create.useMutation({
-    onSuccess: () => setInquiryState("success"),
-    onError: () => setInquiryState("error"),
-  });
+  const { openEnquiry } = useEnquiry();
+  const featured = products.filter((product) => product.featured);
 
-  const submitInquiry = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    setInquiryState("submitting");
-    createInquiry.mutate({
-      name: String(form.get("name")),
-      email: String(form.get("email")),
-      project: String(form.get("project")),
-      message: String(form.get("message")),
-    });
-  };
-
-  return (
-    <main className="site-shell">
-      <header className="site-header">
-        <a className="brand" href="#top" aria-label="Umaid Craftorium home">
-          <span className="brand-mark">UC</span>
-          <span>Umaid Craftorium</span>
-        </a>
-        <button className="menu-toggle" aria-expanded={menuOpen} aria-controls="main-navigation" onClick={() => setMenuOpen(!menuOpen)}>
-          {menuOpen ? <X size={20} /> : <Menu size={20} />}<span className="sr-only">Toggle navigation</span>
-        </button>
-        <nav id="main-navigation" className={`main-nav ${menuOpen ? "is-open" : ""}`} aria-label="Primary navigation">
-          <a href="#collections" onClick={() => setMenuOpen(false)}>Collections</a>
-          <a href="#craftsmanship" onClick={() => setMenuOpen(false)}>Craftsmanship</a>
-          <a href="#story" onClick={() => setMenuOpen(false)}>Our story</a>
-          <a className="nav-cta" href="#inquire" onClick={() => setMenuOpen(false)}>Start an inquiry <ArrowUpRight size={15} /></a>
-        </nav>
-      </header>
-
-      <section id="top" className="hero section-pad">
-        <div className="hero-copy">
-          <p className="eyebrow"><span className="eyebrow-line" /> Handcrafted in India</p>
-          <h1>Objects with a <em>point of view.</em></h1>
-          <p className="hero-lede">Furniture and decorative pieces shaped by skilled hands, enduring materials, and the warmth of a well-made life.</p>
-          <div className="hero-actions">
-            <a className="button button-dark" href="#collections">Explore collections <ArrowUpRight size={17} /></a>
-            <a className="text-link" href="#story">Discover our story <ChevronRight size={16} /></a>
-          </div>
+  return <SiteFrame>
+    <Meta title="Trade furniture from Jodhpur" description="Umaid Craftorium is a trade-only furniture manufacturer, wholesale supplier, and exporter in Jodhpur, India." />
+    <section className="home-hero">
+      <div className="shell home-hero__grid">
+        <div className="home-hero__copy">
+          <p className="eyebrow"><span /> Trade furniture · Jodhpur, India</p>
+          <h1>Furniture with a<br /><em>worldly point of view.</em></h1>
+          <p className="hero-copy">Umaid Craftorium develops, manufactures, and sources furniture and home-interior products for trade buyers, project teams, and global markets.</p>
+          <div className="hero-actions"><Link className="button button--dark" href="/collections">Browse collections <ArrowRight size={17} /></Link><button type="button" className="text-action" onClick={() => { trackIntent("begin_enquiry", { source: "home_hero" }); openEnquiry(); }}>Start an enquiry <ArrowRight size={15} /></button></div>
         </div>
-        <div className="hero-visual">
-          <img src={images.hero} alt="Artisan hand-carving a detailed wooden panel" />
-          <div className="hero-caption"><span>01</span><span>Made slowly. Meant to last.</span></div>
-        </div>
-        <div className="hero-note"><Sparkles size={15} /> Crafted for considered spaces</div>
-      </section>
+        <div className="home-hero__visual"><img src="/manus-storage/product-sideboard_6cf7e491.jpg" alt="Patterned wooden sideboard from Umaid Craftorium collection imagery" /><div className="home-hero__caption"><span>01</span><span>Made for trade projects and considered retail.</span></div></div>
+      </div>
+      <div className="home-hero__strip"><div className="shell"><span><Sparkles size={14} /> Trade-only manufacturer & supplier</span><span><Globe2 size={14} /> Worldwide shipping</span><span><Layers3 size={14} /> Custom development & sourcing</span></div></div>
+    </section>
 
-      <section id="story" className="intro section-pad">
-        <div className="section-kicker">A house of considered craft</div>
-        <div className="intro-grid">
-          <h2>Heritage in the hand.<br /><span>Modernity in the room.</span></h2>
-          <div className="intro-copy"><p>Umaid Craftorium brings together the richness of Indian craft traditions and a clear, contemporary eye. Every piece begins with material: the grain of timber, the weight of stone, the irregular beauty of a hand-finished surface.</p><a className="text-link" href="#craftsmanship">How we make <ChevronRight size={16} /></a></div>
-        </div>
-      </section>
+    <section className="statement section-space section-space--charcoal">
+      <div className="shell statement__grid"><p className="eyebrow">What we make</p><h2>Furniture, home décor, and accessories with the material presence to hold a room.</h2><div><p>The range spans dining, living, kitchen, bar, bathroom, and outdoor furniture, alongside home décor and accessories. Select the references that matter to your project, then take the conversation directly to the trade desk.</p><Link href="/about" className="text-action text-action--light">About Umaid Craftorium <ArrowRight size={15} /></Link></div></div>
+    </section>
 
-      <section id="collections" className="collections section-pad">
-        <div className="section-heading"><div><div className="section-kicker">The edit</div><h2>Made to become part<br />of your story.</h2></div><p>Explore a considered selection of furniture and objects for homes, hospitality, and spaces with a point of view.</p></div>
-        <div className="collection-grid">{collections.map((item) => <a className="collection-card" href="#inquire" key={item.number}><div className="collection-image"><img src={item.image} alt={`${item.title} from Umaid Craftorium`} /><span className="collection-number">{item.number}</span><span className="card-arrow"><ArrowUpRight size={19} /></span></div><h3>{item.title}</h3><p>{item.text}</p></a>)}</div>
-      </section>
+    <section className="section-space collection-feature">
+      <div className="shell"><div className="section-heading"><div><p className="eyebrow">Featured selection</p><h2>Start with the<br /><em>collection.</em></h2></div><p>Browse a compact set of collection references, then add the pieces relevant to your project to one enquiry.</p></div><div className="product-grid product-grid--three">{featured.map((product, index) => <ProductCard product={product} index={index} key={product.id} />)}</div><div className="section-footer-action"><Link href="/collections" className="button button--outline">View all collections <ArrowRight size={17} /></Link></div></div>
+    </section>
 
-      <section id="craftsmanship" className="craft-section section-pad">
-        <div className="craft-image"><img src={images.heritage} alt="Historic carved architecture reflecting Indian decorative craft" /><div className="image-stamp">Est. 1998<br /><span>Jodhpur · India</span></div></div>
-        <div className="craft-copy"><div className="section-kicker">The craft behind the craft</div><h2>Good design<br /><em>takes its time.</em></h2><p>From the first cut to the final polish, our work is guided by patient making. We collaborate with master artisans whose knowledge lives in the details: a joinery line, a softened edge, a pattern held in balance.</p><div className="craft-points"><div><strong>01</strong><span>Honest materials</span></div><div><strong>02</strong><span>Skilled hands</span></div><div><strong>03</strong><span>Lasting forms</span></div></div><a className="button button-light" href="#inquire">Discuss a project <ArrowUpRight size={17} /></a></div>
-      </section>
+    <section className="scale-band"><div className="shell scale-band__grid"><div><p className="eyebrow">Manufacturing in Jodhpur</p><h2>A partner built for<br />the long view.</h2></div><div className="scale-band__facts"><div><strong>18,000 sq. m</strong><span>Manufacturing facility in Jodhpur</span></div><div><strong>20+ units</strong><span>Dedicated operating units</span></div><div><strong>4 steps</strong><span>Quality-control system</span></div></div></div></section>
 
-      <section className="quote-band"><p>“The beauty of a handmade object is that it carries the memory of how it came to be.”</p><span>— Umaid Craftorium</span></section>
+    <section className="custom-feature"><div className="shell custom-feature__grid"><div className="custom-feature__image"><img src="/manus-storage/product-cabinet_0372320c.jpg" alt="Carved wooden cabinet from Umaid Craftorium collection imagery" /><span className="image-label">Custom development</span></div><div className="custom-feature__copy"><p className="eyebrow">Made around the brief</p><h2>Bring the reference.<br /><em>We’ll bring the process.</em></h2><p>Umaid Craftorium states that it develops and sources products according to client-market needs, working with buyers on design and development requirements. Use the enquiry desk to share a drawing, an image, a sourcing brief, or a target category.</p><Link href="/custom-furniture" className="button button--light">Explore custom furniture <ArrowRight size={17} /></Link></div></div></section>
 
-      <section id="inquire" className="inquiry section-pad">
-        <div className="inquiry-intro"><div className="section-kicker">Let’s make something meaningful</div><h2>Bring a little<br /><em>more soul home.</em></h2><p>Tell us what you are looking for, whether it is a single heirloom piece or a complete collection for a new space.</p><div className="contact-details"><a href="mailto:hello@umaidcraftorium.com"><Mail size={16} /> hello@umaidcraftorium.com</a><a href="tel:+919829000000"><Phone size={16} /> +91 98290 00000</a><span><MapPin size={16} /> Jodhpur, Rajasthan, India</span></div></div>
-        <form className="inquiry-form" onSubmit={submitInquiry} aria-label="Project inquiry form">{inquiryState === "submitting" ? <div className="success-state"><div className="success-icon"><Sparkles size={19} /></div><h3>Sending your inquiry…</h3><p>We are saving your project details securely.</p></div> : inquiryState === "success" ? <div className="success-state"><div className="success-icon"><Check size={22} /></div><h3>Thank you for reaching out.</h3><p>Your inquiry has been received. Our team will review it and contact you soon. You can also email us directly if your request is time-sensitive.</p><button type="button" className="text-link" onClick={() => setInquiryState("idle")}>Send another inquiry <ChevronRight size={16} /></button></div> : inquiryState === "error" ? <div className="success-state"><div className="success-icon"><X size={22} /></div><h3>We could not save your inquiry.</h3><p>Please use the email link on the left to contact Umaid Craftorium directly, or try submitting again.</p><button type="button" className="text-link" onClick={() => setInquiryState("idle")}>Try again <ChevronRight size={16} /></button></div> : <><div className="form-row"><label>Name<input required name="name" placeholder="Your name" /></label><label>Email<input required type="email" name="email" placeholder="you@example.com" /></label></div><label>What can we help you with?<select name="project"><option>Tell us about a custom piece</option><option>Explore a collection</option><option>Hospitality or commercial project</option><option>Something else</option></select></label><label>Message<textarea required name="message" rows={5} placeholder="A little about your space, timeline, or the pieces you have in mind..." /></label><button className="button button-dark" type="submit">Send inquiry <ArrowUpRight size={17} /></button><p className="form-note">We respect your inbox. Your information is used only to respond to this inquiry.</p></>}</form>
-      </section>
+    <section className="materials section-space"><div className="shell materials__grid"><div><p className="eyebrow">Wood types in the range</p><h2>Materials chosen<br />for their character.</h2></div><div className="materials__list"><div><span>01</span><p><strong>Sheesham</strong>A wood type included in the furniture range.</p></div><div><span>02</span><p><strong>Mango</strong>A wood type included in the furniture range.</p></div><div><span>03</span><p><strong>Acacia</strong>A wood type included in the furniture range.</p></div><div><span>04</span><p><strong>Pine</strong>A wood type included in the furniture range.</p></div></div></div></section>
 
-      <footer className="site-footer"><a className="brand" href="#top"><span className="brand-mark">UC</span><span>Umaid Craftorium</span></a><p>Made with patience in the Blue City.</p><div className="footer-links"><a href="#collections">Collections</a><a href="#story">About</a><a href="#inquire">Contact</a><a href="#top" aria-label="Instagram"><Instagram size={17} /></a></div></footer>
-    </main>
-  );
+    <section className="process section-space section-space--sand"><div className="shell"><div className="section-heading"><div><p className="eyebrow">A clear project path</p><h2>From first brief<br />to trade enquiry.</h2></div><p>The published site describes design development, product sourcing, quality control, customised container loads, and project supply. The following flow makes those stages easier to start.</p></div><div className="process__grid"><Step number="01" title="Discover" copy="Share the collection, category, reference, or project context." /><Step number="02" title="Develop" copy="Discuss product development and sourcing needs with the trade team." /><Step number="03" title="Review" copy="Align on specifications, materials, quantities, and project considerations." /><Step number="04" title="Enquire" copy="Send one consolidated request to the Umaid Craftorium trade desk." /></div></div></section>
+
+    <section className="cta-block"><div className="shell cta-block__inner"><div><p className="eyebrow">Trade desk</p><h2>Ready to begin<br />a conversation?</h2></div><div><p>Share a product shortlist, an RFQ, or a custom brief. The enquiry flow keeps your selected pieces together so the trade team has the right starting context.</p><button className="button button--light" type="button" onClick={() => { trackIntent("begin_enquiry", { source: "home_cta" }); openEnquiry(); }}>Start an enquiry <ArrowRight size={17} /></button></div></div></section>
+  </SiteFrame>;
+}
+
+function Step({ number, title, copy }: { number: string; title: string; copy: string }) {
+  return <div className="process-step"><span>{number}</span><h3>{title}</h3><p>{copy}</p><ChevronRight size={19} /></div>;
 }

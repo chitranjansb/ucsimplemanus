@@ -1,18 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { buildInquiryMailto } from "../client/src/pages/Home";
+import { getProduct, productCategories, products } from "../client/src/lib/catalog";
 
-describe("Umaid Craftorium inquiry flow", () => {
-  it("builds a mailto handoff with encoded inquiry details", () => {
-    const href = buildInquiryMailto("Asha & Co", "asha@example.com", "Bespoke Projects", "Need a console for a new space");
-    expect(href.startsWith("mailto:hello@umaidcraftorium.com?")).toBe(true);
-    expect(decodeURIComponent(href)).toContain("Umaid Craftorium inquiry from Asha & Co");
-    expect(decodeURIComponent(href)).toContain("Need a console for a new space");
+describe("Umaid Craftorium catalogue", () => {
+  it("exposes product references with an honest specification boundary", () => {
+    expect(products.length).toBeGreaterThan(0);
+    expect(products.every((product) => product.dimensions === "Specifications available on request")).toBe(true);
+    expect(products.every((product) => product.image.startsWith("/manus-storage/"))).toBe(true);
   });
 
-  it("keeps customer details in the composed body", () => {
-    const href = buildInquiryMailto("Ravi", "ravi@example.com", "Explore a collection", "Please share the current catalogue.");
-    const decoded = decodeURIComponent(href);
-    expect(decoded).toContain("ravi@example.com");
-    expect(decoded).toContain("Explore a collection");
+  it("retrieves an individual product reference and exposes relevant category filters", () => {
+    expect(getProduct("carved-storage-cabinet")?.collection).toBe("Mosaic");
+    expect(productCategories).toContain("Storage");
+    expect(getProduct("missing-product")).toBeUndefined();
   });
 });
