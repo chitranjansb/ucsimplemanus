@@ -20,3 +20,4 @@
 - [x] Perform and document explicit keyboard focus, contrast, and reduced-motion verification.
 - [x] Record the browser-automation limitation and preserve manual visual QA evidence for the interaction flow.
 - [x] Save a checkpoint; the implementation report, remaining information needs, and deployment notes are documented in IMPLEMENTATION_REPORT.md.
+- [x] Correct unintended image cropping across product cards, galleries, and editorial image containers on desktop and mobile.
