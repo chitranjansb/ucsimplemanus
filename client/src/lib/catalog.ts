@@ -1,5 +1,7 @@
 export type ProductCategory = "Dining" | "Living" | "Bedroom" | "Bathroom" | "Outdoor" | "Storage";
 
+import type { ImageFocalPoint } from "@/lib/imageFocal";
+
 export type Product = {
   id: string;
   name: string;
@@ -10,6 +12,8 @@ export type Product = {
   dimensions: string;
   image: string;
   imageAlt: string;
+  /** Sets product placement inside fixed editorial frames; values are percentages from the image’s top-left corner. */
+  imageFocal?: ImageFocalPoint;
   featured?: boolean;
 };
 
@@ -47,6 +51,7 @@ export const products: Product[] = [
     dimensions: "Specifications available on request",
     image: "/manus-storage/product-cabinet_0372320c.jpg",
     imageAlt: "Carved wooden cabinet from Umaid Craftorium collection imagery",
+    imageFocal: { desktop: { x: 50, y: 48 }, mobile: { x: 50, y: 44 }, fit: "contain" },
     featured: true,
   },
   {
@@ -59,6 +64,7 @@ export const products: Product[] = [
     dimensions: "Specifications available on request",
     image: "/manus-storage/product-console_2e1070d8.jpg",
     imageAlt: "Blue wooden accent table from Umaid Craftorium collection imagery",
+    imageFocal: { desktop: { x: 50, y: 48 }, mobile: { x: 51, y: 46 }, fit: "contain" },
     featured: true,
   },
   {
@@ -71,6 +77,7 @@ export const products: Product[] = [
     dimensions: "Specifications available on request",
     image: "/manus-storage/product-sideboard_6cf7e491.jpg",
     imageAlt: "Patterned wooden sideboard from Umaid Craftorium collection imagery",
+    imageFocal: { desktop: { x: 50, y: 50 }, mobile: { x: 50, y: 45 }, fit: "contain" },
     featured: true,
   },
   {
@@ -83,6 +90,7 @@ export const products: Product[] = [
     dimensions: "Specifications available on request",
     image: "/manus-storage/product-trunk_6aad3181.jpg",
     imageAlt: "Wooden storage chest from Umaid Craftorium collection imagery",
+    imageFocal: { desktop: { x: 50, y: 49 }, mobile: { x: 50, y: 45 }, fit: "contain" },
   },
   {
     id: "carved-cabinet",
@@ -94,6 +102,7 @@ export const products: Product[] = [
     dimensions: "Specifications available on request",
     image: "/manus-storage/product-carved-cabinet_18e101e8.jpg",
     imageAlt: "Carved cabinet from Umaid Craftorium collection imagery",
+    imageFocal: { desktop: { x: 50, y: 49 }, mobile: { x: 50, y: 45 }, fit: "contain" },
   },
 ];
 
@@ -117,5 +126,5 @@ export function filterProducts(query: string, category: (typeof productCategorie
 }
 
 export function getProductGallery(product: Product, catalogue: Product[] = products) {
-  return [product.image, ...catalogue.filter((item) => item.id !== product.id).slice(0, 2).map((item) => item.image)];
+  return [product, ...catalogue.filter((item) => item.id !== product.id).slice(0, 2)].map((item) => ({ src: item.image, alt: item.imageAlt, focal: item.imageFocal }));
 }

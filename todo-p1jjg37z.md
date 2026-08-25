@@ -21,3 +21,8 @@
 - [x] Record the browser-automation limitation and preserve manual visual QA evidence for the interaction flow.
 - [x] Save a checkpoint; the implementation report, remaining information needs, and deployment notes are documented in IMPLEMENTATION_REPORT.md.
 - [x] Correct unintended image cropping across product cards, galleries, and editorial image containers on desktop and mobile.
+- [x] Add configurable desktop and mobile focal-point metadata to catalogue images and apply it consistently across product cards, gallery views, and editorial product imagery.
+- [x] Add unit coverage and responsive visual verification for focal-point configuration behavior.
+- [x] Save a checkpoint and document how to set focal points for future catalogue images.
+- [x] Capture and review desktop focal-point framing across product cards, the homepage, shared editorial heroes, and the product gallery.
+- [ ] Save a checkpoint containing the focal-point metadata, responsive rendering, tests, and IMAGE_FOCAL_POINTS.md documentation.

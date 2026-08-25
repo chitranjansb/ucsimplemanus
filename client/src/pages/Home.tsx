@@ -3,12 +3,15 @@ import { ProductCard } from "@/components/ProductCard";
 import { useEnquiry } from "@/contexts/EnquiryContext";
 import { products } from "@/lib/catalog";
 import { trackIntent } from "@/lib/analytics";
+import { getImageFocalStyle } from "@/lib/imageFocal";
 import { ArrowDownRight, ArrowRight, Check, ChevronRight, Globe2, Layers3, Sparkles } from "lucide-react";
 import { Link } from "wouter";
 
 export default function Home() {
   const { openEnquiry } = useEnquiry();
   const featured = products.filter((product) => product.featured);
+  const heroProduct = products.find((product) => product.id === "patterned-sideboard") ?? products[0];
+  const customFeatureProduct = products.find((product) => product.id === "carved-storage-cabinet") ?? products[0];
 
   return <SiteFrame>
     <Meta title="Trade furniture from Jodhpur" description="Umaid Craftorium is a trade-only furniture manufacturer, wholesale supplier, and exporter in Jodhpur, India." />
@@ -20,7 +23,7 @@ export default function Home() {
           <p className="hero-copy">Umaid Craftorium develops, manufactures, and sources furniture and home-interior products for trade buyers, project teams, and global markets.</p>
           <div className="hero-actions"><Link className="button button--dark" href="/collections">Browse collections <ArrowRight size={17} /></Link><button type="button" className="text-action" onClick={() => { trackIntent("begin_enquiry", { source: "home_hero" }); openEnquiry(); }}>Start an enquiry <ArrowRight size={15} /></button></div>
         </div>
-        <div className="home-hero__visual"><img src="/manus-storage/product-sideboard_6cf7e491.jpg" alt="Patterned wooden sideboard from Umaid Craftorium collection imagery" /><div className="home-hero__caption"><span>01</span><span>Made for trade projects and considered retail.</span></div></div>
+        <div className="home-hero__visual"><img src={heroProduct.image} alt={heroProduct.imageAlt} style={getImageFocalStyle(heroProduct.imageFocal)} /><div className="home-hero__caption"><span>01</span><span>Made for trade projects and considered retail.</span></div></div>
       </div>
       <div className="home-hero__strip"><div className="shell"><span><Sparkles size={14} /> Trade-only manufacturer & supplier</span><span><Globe2 size={14} /> Worldwide shipping</span><span><Layers3 size={14} /> Custom development & sourcing</span></div></div>
     </section>
@@ -35,7 +38,7 @@ export default function Home() {
 
     <section className="scale-band"><div className="shell scale-band__grid"><div><p className="eyebrow">Manufacturing in Jodhpur</p><h2>A partner built for<br />the long view.</h2></div><div className="scale-band__facts"><div><strong>18,000 sq. m</strong><span>Manufacturing facility in Jodhpur</span></div><div><strong>20+ units</strong><span>Dedicated operating units</span></div><div><strong>4 steps</strong><span>Quality-control system</span></div></div></div></section>
 
-    <section className="custom-feature"><div className="shell custom-feature__grid"><div className="custom-feature__image"><img src="/manus-storage/product-cabinet_0372320c.jpg" alt="Carved wooden cabinet from Umaid Craftorium collection imagery" /><span className="image-label">Custom development</span></div><div className="custom-feature__copy"><p className="eyebrow">Made around the brief</p><h2>Bring the reference.<br /><em>We’ll bring the process.</em></h2><p>Umaid Craftorium states that it develops and sources products according to client-market needs, working with buyers on design and development requirements. Use the enquiry desk to share a drawing, an image, a sourcing brief, or a target category.</p><Link href="/custom-furniture" className="button button--light">Explore custom furniture <ArrowRight size={17} /></Link></div></div></section>
+    <section className="custom-feature"><div className="shell custom-feature__grid"><div className="custom-feature__image"><img src={customFeatureProduct.image} alt={customFeatureProduct.imageAlt} style={getImageFocalStyle(customFeatureProduct.imageFocal)} /><span className="image-label">Custom development</span></div><div className="custom-feature__copy"><p className="eyebrow">Made around the brief</p><h2>Bring the reference.<br /><em>We’ll bring the process.</em></h2><p>Umaid Craftorium states that it develops and sources products according to client-market needs, working with buyers on design and development requirements. Use the enquiry desk to share a drawing, an image, a sourcing brief, or a target category.</p><Link href="/custom-furniture" className="button button--light">Explore custom furniture <ArrowRight size={17} /></Link></div></div></section>
 
     <section className="materials section-space"><div className="shell materials__grid"><div><p className="eyebrow">Wood types in the range</p><h2>Materials chosen<br />for their character.</h2></div><div className="materials__list"><div><span>01</span><p><strong>Sheesham</strong>A wood type included in the furniture range.</p></div><div><span>02</span><p><strong>Mango</strong>A wood type included in the furniture range.</p></div><div><span>03</span><p><strong>Acacia</strong>A wood type included in the furniture range.</p></div><div><span>04</span><p><strong>Pine</strong>A wood type included in the furniture range.</p></div></div></div></section>
 
