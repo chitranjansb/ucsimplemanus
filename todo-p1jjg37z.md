@@ -49,3 +49,13 @@
 - [x] Build the protected `/admin` dashboard and responsive management screens without changing public page routes or design.
 - [x] Add tests for unauthenticated and non-admin denial, authorized admin actions, validation, lifecycle CRUD, protected routes, media guards, and existing RFQ compatibility.
 - [x] Run final type checks, tests, production build, responsive visual verification, checkpoint, and admin CMS handoff.
+
+- [ ] Audit the existing enquiry schema, persistence, tRPC procedures, admin UI, RFQ payloads, and authorization boundaries for the internal sales CRM.
+- [ ] Design a fact-safe CRM status model, activity/follow-up records, dashboard aggregates, validation contracts, and safe migration.
+- [ ] Implement non-destructive CRM schema changes, protected services, typed tRPC procedures, status-transition checks, assignments, internal notes, activities, and follow-up dates.
+- [ ] Build a desktop-first internal sales dashboard and enquiry detail workflow with search, filters, sorting, pagination, and responsive behavior.
+- [ ] Ensure internal CRM notes and sales data remain private and public RFQ behavior remains unchanged.
+- [ ] Add tests for permissions, status transitions, assignment, notes, activity history, filtering, pagination, and RFQ compatibility.
+- [ ] Run final type checks, tests, production build, responsive verification, checkpoint, and CRM handoff.
+كان
+
