@@ -72,3 +72,9 @@
 - [x] Implement country-aware phone validation, server-side catalogue facets, and shareable shortlist persistence without exposing private RFQ data or secrets.
 - [x] Integrate the follow-up controls into the RFQ, catalogue, and comparison interfaces with accessible responsive presentation.
 - [x] Add tests for phone validation, facet retrieval, share-link privacy/persistence, and existing RFQ/catalogue regressions; run final checks, build, visual QA, checkpoint, and handoff.
+
+- [x] Inspect the connected GitHub repository, branch, worktree, dependencies, and current runtime/build logs for errors.
+- [x] Reproduce and isolate the reported or discovered repository failures without assuming unrelated changes are broken.
+- [x] Apply minimal compatible fixes and preserve catalogue, RFQ, CRM, admin, and public-site behavior.
+- [x] Run full type checking, tests, production build, security/dependency checks, and targeted regression validation.
+- [x] Review the final diff, save a corrected checkpoint, and push the validated code to the connected GitHub repository.
