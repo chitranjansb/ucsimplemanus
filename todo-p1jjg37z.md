@@ -32,3 +32,4 @@
 - [x] Implement the highest-impact production-readiness improvements without fabricating business or product data.
 - [x] Perform regression, accessibility, performance, and production-build validation; document remaining risks and required business data.
 - [x] Save a checkpoint and deliver the production-readiness upgrade report.
+- [ ] Commit the completed production-readiness upgrade to the connected GitHub repository and push it to the configured branch.
