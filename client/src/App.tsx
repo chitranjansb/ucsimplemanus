@@ -1,5 +1,5 @@
-import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/components/ui/sonner";
 import { EnquiryProvider } from "@/contexts/EnquiryContext";
 import { Route, Switch } from "wouter";
 import { lazy, Suspense } from "react";
@@ -12,10 +12,14 @@ const ProductDetail = lazy(() => import("./pages/ProductDetail"));
 const CapabilityPage = lazy(() => import("./pages/CapabilityPage"));
 const Contact = lazy(() => import("./pages/Contact"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const Admin = lazy(() => import("./pages/Admin"));
 
 function Router() {
   return (
     <Switch>
+      <Route path="/admin/:section/:id" component={Admin} />
+      <Route path="/admin/:section" component={Admin} />
+      <Route path="/admin" component={Admin} />
       <Route path="/" component={Home} />
       <Route path="/collections" component={Collections} />
       <Route path="/collections/:id">{(params) => <ProductDetail id={params.id} />}</Route>

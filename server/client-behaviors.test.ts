@@ -4,6 +4,7 @@ import { filterProducts, getProduct, getProductGallery, products } from "../clie
 import { addEnquiryItem, removeEnquiryItem, updateEnquiryItemQuantity } from "../client/src/lib/enquirySelection";
 import { getImageFocalStyle } from "../client/src/lib/imageFocal";
 import { validateRfqFiles } from "../client/src/lib/rfqAttachments";
+import { getAdminRouteState } from "../client/src/lib/adminAccess";
 
 describe("catalogue and enquiry client helpers", () => {
   it("filters the catalogue by text and category without altering the source collection", () => {
@@ -56,5 +57,12 @@ describe("catalogue and enquiry client helpers", () => {
 
   it("builds structured analytics details without exposing configuration", () => {
     expect(buildIntentDetail("catalogue_filter", { category: "Storage" })).toEqual({ event: "catalogue_filter", category: "Storage" });
+  });
+
+  it("keeps the client admin route behind explicit loading, authentication, and role gates", () => {
+    expect(getAdminRouteState(null, true)).toBe("loading");
+    expect(getAdminRouteState(null, false)).toBe("unauthenticated");
+    expect(getAdminRouteState({ role: "user" }, false)).toBe("forbidden");
+    expect(getAdminRouteState({ role: "admin" }, false)).toBe("authorized");
   });
 });

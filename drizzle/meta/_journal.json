@@ -29,6 +29,13 @@
       "when": 1787655740256,
       "tag": "0003_even_cannonball",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1787657437569,
+      "tag": "0004_nice_hannibal_king",
+      "breakpoints": true
     }
   ]
 }

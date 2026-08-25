@@ -19,12 +19,18 @@ export const collections = mysqlTable("catalog_collections", {
   slug: varchar("slug", { length: 160 }).notNull(),
   name: varchar("name", { length: 200 }).notNull(),
   description: text("description"),
+  heroMediaId: int("heroMediaId"),
+  sortOrder: int("sortOrder").default(0).notNull(),
+  status: mysqlEnum("status", ["active", "archived"]).default("active").notNull(),
   seoTitle: varchar("seoTitle", { length: 255 }),
   seoDescription: varchar("seoDescription", { length: 320 }),
   metadata: json("metadata").$type<Record<string, unknown>>(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-}, (table) => [uniqueIndex("catalog_collections_slug_unique").on(table.slug)]);
+}, (table) => [
+  uniqueIndex("catalog_collections_slug_unique").on(table.slug),
+  index("catalog_collections_status_sort_idx").on(table.status, table.sortOrder),
+]);
 
 /** Reusable product taxonomy. Category rows are intentionally editorial rather than commercial claims. */
 export const catalogCategories = mysqlTable("catalog_categories", {
@@ -33,9 +39,14 @@ export const catalogCategories = mysqlTable("catalog_categories", {
   name: varchar("name", { length: 200 }).notNull(),
   description: text("description"),
   sortOrder: int("sortOrder").default(0).notNull(),
+  status: mysqlEnum("status", ["active", "archived"]).default("active").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-}, (table) => [uniqueIndex("catalog_categories_slug_unique").on(table.slug), index("catalog_categories_sort_idx").on(table.sortOrder)]);
+}, (table) => [
+  uniqueIndex("catalog_categories_slug_unique").on(table.slug),
+  index("catalog_categories_sort_idx").on(table.sortOrder),
+  index("catalog_categories_status_sort_idx").on(table.status, table.sortOrder),
+]);
 
 /** Approved material vocabulary; product use is modeled through a join table. */
 export const catalogMaterials = mysqlTable("catalog_materials", {
@@ -176,6 +187,7 @@ export const catalogProductSpecifications = mysqlTable("catalog_product_specific
 export const catalogProductImages = mysqlTable("catalog_product_images", {
   id: int("id").autoincrement().primaryKey(),
   productId: int("productId").notNull(),
+  mediaAssetId: int("mediaAssetId"),
   storageKey: varchar("storageKey", { length: 512 }),
   url: text("url").notNull(),
   alt: varchar("alt", { length: 400 }),
@@ -189,6 +201,24 @@ export const catalogProductImages = mysqlTable("catalog_product_images", {
   mobileFit: mysqlEnum("mobileFit", ["contain", "cover"]),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => [index("catalog_product_images_product_idx").on(table.productId, table.sortOrder)]);
+
+/** Media metadata is centrally managed; file bytes remain in the existing storage service. */
+export const mediaAssets = mysqlTable("media_assets", {
+  id: int("id").autoincrement().primaryKey(),
+  storageKey: varchar("storageKey", { length: 512 }).notNull(),
+  url: text("url").notNull(),
+  filename: varchar("filename", { length: 240 }).notNull(),
+  contentType: varchar("contentType", { length: 120 }).notNull(),
+  byteSize: int("byteSize").notNull(),
+  alt: varchar("alt", { length: 400 }),
+  status: mysqlEnum("status", ["active", "archived"]).default("active").notNull(),
+  createdByUserId: int("createdByUserId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => [
+  uniqueIndex("media_assets_storage_key_unique").on(table.storageKey),
+  index("media_assets_status_created_idx").on(table.status, table.createdAt),
+]);
 
 export const catalogProductDocuments = mysqlTable("catalog_product_documents", {
   id: int("id").autoincrement().primaryKey(),
@@ -218,8 +248,13 @@ export const inquiries = mysqlTable("inquiries", {
   message: text("message").notNull(),
   metadata: json("metadata").$type<Record<string, unknown>>(),
   status: mysqlEnum("status", ["new", "contacted", "closed"]).default("new").notNull(),
+  assignedToUserId: int("assignedToUserId"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => [
+  index("inquiries_status_created_idx").on(table.status, table.createdAt),
+  index("inquiries_assigned_created_idx").on(table.assignedToUserId, table.createdAt),
+]);
 
 /** Snapshot each selected product reference to keep enquiries meaningful even when catalogue records later change. */
 export const inquiryItems = mysqlTable("inquiry_items", {
@@ -244,6 +279,26 @@ export const inquiryAttachments = mysqlTable("inquiry_attachments", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => [index("inquiry_attachments_inquiry_idx").on(table.inquiryId)]);
 
+/** Append-only internal notes retain support-team context without changing the buyer-facing RFQ record. */
+export const inquiryNotes = mysqlTable("inquiry_notes", {
+  id: int("id").autoincrement().primaryKey(),
+  inquiryId: int("inquiryId").notNull(),
+  authorUserId: int("authorUserId").notNull(),
+  authorName: varchar("authorName", { length: 200 }),
+  note: text("note").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => [index("inquiry_notes_inquiry_created_idx").on(table.inquiryId, table.createdAt)]);
+
+/** Deliberately bounded content blocks that map to existing public copy areas only. */
+export const siteContent = mysqlTable("site_content", {
+  id: int("id").autoincrement().primaryKey(),
+  contentKey: varchar("contentKey", { length: 120 }).notNull(),
+  body: text("body").notNull(),
+  updatedByUserId: int("updatedByUserId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => [uniqueIndex("site_content_key_unique").on(table.contentKey)]);
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type Inquiry = typeof inquiries.$inferSelect;
@@ -256,3 +311,5 @@ export type CatalogMaterial = typeof catalogMaterials.$inferSelect;
 export type CatalogFinish = typeof catalogFinishes.$inferSelect;
 export type CatalogProductVariant = typeof catalogProductVariants.$inferSelect;
 export type CatalogProductSpecification = typeof catalogProductSpecifications.$inferSelect;
+export type MediaAsset = typeof mediaAssets.$inferSelect;
+export type InquiryNote = typeof inquiryNotes.$inferSelect;

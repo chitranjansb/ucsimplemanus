@@ -42,3 +42,10 @@
 - [x] Update catalogue pages, product details, related products, RFQ selection, and metadata to consume the structured model while preserving public routes and visual design.
 - [x] Add automated coverage for product validation, retrieval, filtering, search, collection relationships, variants, invalid data, and existing RFQ behavior.
 - [x] Run final type checks, tests, production build, responsive visual validation, checkpoint, and implementation handoff.
+- [x] Audit current authentication, role enforcement, database schema, tRPC procedures, catalogue, enquiry workflow, routes, and reusable dashboard components for the admin CMS extension.
+- [x] Design a fact-safe, role-protected admin CMS data model and validation contracts for products, collections, categories, media, enquiries, and supported website content.
+- [x] Add a safe migration and protected service layer for admin metadata, media records, collection/category ordering and archival, enquiry assignments and notes, and audit-safe product lifecycle actions.
+- [x] Implement server-authorized admin APIs for dashboard metrics, catalogue CRUD and bulk actions, taxonomy management, media uploads and assignment, enquiry workflow, and compatible content updates.
+- [x] Build the protected `/admin` dashboard and responsive management screens without changing public page routes or design.
+- [x] Add tests for unauthenticated and non-admin denial, authorized admin actions, validation, lifecycle CRUD, protected routes, media guards, and existing RFQ compatibility.
+- [x] Run final type checks, tests, production build, responsive visual verification, checkpoint, and admin CMS handoff.

@@ -180,9 +180,9 @@ async function requireTaxonomyRows<T extends { slug: string }>(rows: T[], reques
 export async function createCatalogueProduct(input: ProductCreateInput) {
   const db = await getDb();
   if (!db) throw new Error("Database is not available");
-  const collection = input.collectionSlug ? (await db.select().from(collections).where(eq(collections.slug, input.collectionSlug)).limit(1))[0] : undefined;
-  if (input.collectionSlug && !collection) throw new Error("Unknown collection reference.");
-  const categories = await requireTaxonomyRows(await db.select().from(catalogCategories).where(inArray(catalogCategories.slug, input.categorySlugs)), input.categorySlugs, "category");
+  const collection = input.collectionSlug ? (await db.select().from(collections).where(and(eq(collections.slug, input.collectionSlug), eq(collections.status, "active"))).limit(1))[0] : undefined;
+  if (input.collectionSlug && !collection) throw new Error("Unknown or archived collection reference.");
+  const categories = await requireTaxonomyRows(await db.select().from(catalogCategories).where(and(inArray(catalogCategories.slug, input.categorySlugs), eq(catalogCategories.status, "active"))), input.categorySlugs, "category");
   const materials = input.materialSlugs.length ? await requireTaxonomyRows(await db.select().from(catalogMaterials).where(inArray(catalogMaterials.slug, input.materialSlugs)), input.materialSlugs, "material") : [];
   const finishes = input.finishSlugs.length ? await requireTaxonomyRows(await db.select().from(catalogFinishes).where(inArray(catalogFinishes.slug, input.finishSlugs)), input.finishSlugs, "finish") : [];
   const primaryCategory = categories.find((category) => category.slug === (input.primaryCategorySlug || input.categorySlugs[0]));

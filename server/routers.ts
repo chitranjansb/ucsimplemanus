@@ -2,12 +2,66 @@ import { COOKIE_NAME } from "@shared/const";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { createCatalogueProduct, getCatalogueProductBySlug, listCatalogueProducts } from "./catalogue";
+import {
+  addAdminEnquiryNote,
+  archiveAdminCategory,
+  archiveAdminCollection,
+  archiveAdminProduct,
+  bulkUpdateAdminProducts,
+  createAdminCategory,
+  createAdminCollection,
+  deleteAdminMedia,
+  deleteAdminProduct,
+  duplicateAdminProduct,
+  getAdminDashboard,
+  getAdminEnquiry,
+  getAdminProduct,
+  getAdminSiteContent,
+  getPublicSiteContent,
+  listAdminCategories,
+  listAdminCollections,
+  listAdminEnquiries,
+  listAdminMedia,
+  listAdminProducts,
+  listAdminSalespeople,
+  listAdminTaxonomy,
+  updateAdminCategory,
+  updateAdminCollection,
+  updateAdminEnquiry,
+  updateAdminMedia,
+  updateAdminProduct,
+  updateAdminSiteContent,
+  uploadAdminMedia,
+} from "./admin";
 import { createProjectInquiry } from "./db";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, publicProcedure, router } from "./_core/trpc";
 import { storagePut } from "./storage";
 import { catalogueListSchema, productCreateSchema, productSlugSchema } from "../shared/catalogue";
+import {
+  adminBulkProductSchema,
+  adminCategoryArchiveSchema,
+  adminCategoryCreateSchema,
+  adminCategoryUpdateSchema,
+  adminCollectionArchiveSchema,
+  adminCollectionCreateSchema,
+  adminCollectionUpdateSchema,
+  adminInquiryIdSchema,
+  adminInquiryListSchema,
+  adminInquiryNoteSchema,
+  adminInquiryUpdateSchema,
+  adminMediaIdSchema,
+  adminMediaListSchema,
+  adminMediaUpdateSchema,
+  adminMediaUploadSchema,
+  adminPaginationSchema,
+  adminProductDuplicateSchema,
+  adminProductIdSchema,
+  adminProductListSchema,
+  adminProductUpdateSchema,
+  adminSiteContentSchema,
+} from "../shared/admin";
 
 const MAX_ATTACHMENT_BYTES = 1_500_000;
 const MAX_ATTACHMENTS = 3;
@@ -55,6 +109,10 @@ function decodeAttachment(data: string, declaredSize: number) {
   const bytes = Buffer.from(normalized, "base64");
   if (bytes.byteLength !== declaredSize || bytes.byteLength > MAX_ATTACHMENT_BYTES) throw new TRPCError({ code: "BAD_REQUEST", message: "Attachment exceeds the allowed size." });
   return bytes;
+}
+
+function asAdminError(error: unknown, fallback: string) {
+  return new TRPCError({ code: "BAD_REQUEST", message: error instanceof Error ? error.message : fallback });
 }
 
 const attachmentSchema = z.object({
@@ -148,6 +206,96 @@ export const appRouter = router({
         attachments: uploadedAttachments,
       });
       return { success: true, inquiryId: created.id } as const;
+    }),
+  }),
+  content: router({
+    public: publicProcedure.query(() => getPublicSiteContent()),
+  }),
+  admin: router({
+    dashboard: adminProcedure.query(() => getAdminDashboard()),
+    taxonomy: adminProcedure.query(() => listAdminTaxonomy()),
+    products: router({
+      list: adminProcedure.input(adminProductListSchema).query(({ input }) => listAdminProducts(input)),
+      byId: adminProcedure.input(adminProductIdSchema).query(async ({ input }) => {
+        const product = await getAdminProduct(input.id);
+        if (!product) throw new TRPCError({ code: "NOT_FOUND", message: "Product not found." });
+        return product;
+      }),
+      create: adminProcedure.input(productCreateSchema).mutation(async ({ input }) => {
+        try { return await createCatalogueProduct(input); } catch (error) { throw asAdminError(error, "Unable to create product."); }
+      }),
+      update: adminProcedure.input(adminProductUpdateSchema).mutation(async ({ input }) => {
+        try { return await updateAdminProduct(input); } catch (error) { throw asAdminError(error, "Unable to update product."); }
+      }),
+      duplicate: adminProcedure.input(adminProductDuplicateSchema).mutation(async ({ input }) => {
+        try { return await duplicateAdminProduct(input.id, input.slug, input.name); } catch (error) { throw asAdminError(error, "Unable to duplicate product."); }
+      }),
+      archive: adminProcedure.input(z.object({ id: z.number().int().positive(), archived: z.boolean() })).mutation(async ({ input }) => {
+        try { return await archiveAdminProduct(input.id, input.archived); } catch (error) { throw asAdminError(error, "Unable to change product status."); }
+      }),
+      delete: adminProcedure.input(adminProductIdSchema).mutation(async ({ input }) => {
+        try { return await deleteAdminProduct(input.id); } catch (error) { throw asAdminError(error, "Unable to delete product."); }
+      }),
+      bulk: adminProcedure.input(adminBulkProductSchema).mutation(async ({ input }) => {
+        try { return await bulkUpdateAdminProducts(input.ids, input.action); } catch (error) { throw asAdminError(error, "Unable to update products."); }
+      }),
+    }),
+    collections: router({
+      list: adminProcedure.query(() => listAdminCollections()),
+      create: adminProcedure.input(adminCollectionCreateSchema).mutation(async ({ input }) => {
+        try { return await createAdminCollection(input); } catch (error) { throw asAdminError(error, "Unable to create collection."); }
+      }),
+      update: adminProcedure.input(adminCollectionUpdateSchema).mutation(async ({ input }) => {
+        try { return await updateAdminCollection(input); } catch (error) { throw asAdminError(error, "Unable to update collection."); }
+      }),
+      archive: adminProcedure.input(adminCollectionArchiveSchema).mutation(async ({ input }) => {
+        try { return await archiveAdminCollection(input.id, input.archived); } catch (error) { throw asAdminError(error, "Unable to change collection status."); }
+      }),
+    }),
+    categories: router({
+      list: adminProcedure.query(() => listAdminCategories()),
+      create: adminProcedure.input(adminCategoryCreateSchema).mutation(async ({ input }) => {
+        try { return await createAdminCategory(input); } catch (error) { throw asAdminError(error, "Unable to create category."); }
+      }),
+      update: adminProcedure.input(adminCategoryUpdateSchema).mutation(async ({ input }) => {
+        try { return await updateAdminCategory(input); } catch (error) { throw asAdminError(error, "Unable to update category."); }
+      }),
+      archive: adminProcedure.input(adminCategoryArchiveSchema).mutation(async ({ input }) => {
+        try { return await archiveAdminCategory(input.id, input.archived); } catch (error) { throw asAdminError(error, "Unable to change category status."); }
+      }),
+    }),
+    media: router({
+      list: adminProcedure.input(adminMediaListSchema).query(({ input }) => listAdminMedia(input)),
+      upload: adminProcedure.input(adminMediaUploadSchema).mutation(async ({ input, ctx }) => {
+        try { return await uploadAdminMedia(input, ctx.user.id); } catch (error) { throw asAdminError(error, "Unable to upload media."); }
+      }),
+      update: adminProcedure.input(adminMediaUpdateSchema).mutation(async ({ input }) => {
+        try { return await updateAdminMedia(input); } catch (error) { throw asAdminError(error, "Unable to update media."); }
+      }),
+      delete: adminProcedure.input(adminMediaIdSchema).mutation(async ({ input }) => {
+        try { return await deleteAdminMedia(input.id); } catch (error) { throw asAdminError(error, "Unable to delete media."); }
+      }),
+    }),
+    enquiries: router({
+      list: adminProcedure.input(adminInquiryListSchema).query(({ input }) => listAdminEnquiries(input)),
+      byId: adminProcedure.input(adminInquiryIdSchema).query(async ({ input }) => {
+        const enquiry = await getAdminEnquiry(input.id);
+        if (!enquiry) throw new TRPCError({ code: "NOT_FOUND", message: "Enquiry not found." });
+        return enquiry;
+      }),
+      update: adminProcedure.input(adminInquiryUpdateSchema).mutation(async ({ input }) => {
+        try { return await updateAdminEnquiry(input); } catch (error) { throw asAdminError(error, "Unable to update enquiry."); }
+      }),
+      addNote: adminProcedure.input(adminInquiryNoteSchema).mutation(async ({ input, ctx }) => {
+        try { return await addAdminEnquiryNote(input.id, input.note, ctx.user); } catch (error) { throw asAdminError(error, "Unable to add enquiry note."); }
+      }),
+      salespeople: adminProcedure.query(() => listAdminSalespeople()),
+    }),
+    content: router({
+      list: adminProcedure.query(() => getAdminSiteContent()),
+      update: adminProcedure.input(adminSiteContentSchema).mutation(async ({ input, ctx }) => {
+        try { return await updateAdminSiteContent(input.contentKey, input.body, ctx.user.id); } catch (error) { throw asAdminError(error, "Unable to update website content."); }
+      }),
     }),
   }),
 });

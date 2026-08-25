@@ -11,7 +11,9 @@ import { Link } from "wouter";
 export default function Home() {
   const { openEnquiry } = useEnquiry();
   const featuredQuery = trpc.catalogue.list.useQuery({ featured: true, limit: 6 }, { retry: false });
+  const contentQuery = trpc.content.public.useQuery(undefined, { retry: false });
   const catalogue = featuredQuery.data || products;
+  const heroCopy = contentQuery.data?.homepage_hero_copy || "Umaid Craftorium develops, manufactures, and sources furniture and home-interior products for trade buyers, project teams, and global markets.";
   const featured = catalogue.filter((product) => product.featured);
   const heroProduct = catalogue.find((product) => product.id === "patterned-sideboard") ?? products.find((product) => product.id === "patterned-sideboard") ?? products[0];
   const customFeatureProduct = catalogue.find((product) => product.id === "carved-storage-cabinet") ?? products.find((product) => product.id === "carved-storage-cabinet") ?? products[0];
@@ -23,7 +25,7 @@ export default function Home() {
         <div className="home-hero__copy">
           <p className="eyebrow"><span /> Trade furniture · Jodhpur, India</p>
           <h1>Furniture with a<br /><em>worldly point of view.</em></h1>
-          <p className="hero-copy">Umaid Craftorium develops, manufactures, and sources furniture and home-interior products for trade buyers, project teams, and global markets.</p>
+          <p className="hero-copy">{heroCopy}</p>
           <div className="hero-actions"><Link className="button button--dark" href="/collections">Browse collections <ArrowRight size={17} /></Link><button type="button" className="text-action" onClick={() => { trackIntent("begin_enquiry", { source: "home_hero" }); openEnquiry(); }}>Start an enquiry <ArrowRight size={15} /></button></div>
         </div>
         <div className="home-hero__visual"><img src={heroProduct.image} alt={heroProduct.imageAlt} style={getImageFocalStyle(heroProduct.imageFocal)} /><div className="home-hero__caption"><span>01</span><span>Made for trade projects and considered retail.</span></div></div>
