@@ -19,4 +19,4 @@
 - [x] Add unit coverage for catalogue filters, enquiry selection state, and analytics event dispatch.
 - [x] Perform and document explicit keyboard focus, contrast, and reduced-motion verification.
 - [x] Record the browser-automation limitation and preserve manual visual QA evidence for the interaction flow.
-- [ ] Save a checkpoint; the implementation report, remaining information needs, and deployment notes are documented in IMPLEMENTATION_REPORT.md.
+- [x] Save a checkpoint; the implementation report, remaining information needs, and deployment notes are documented in IMPLEMENTATION_REPORT.md.
