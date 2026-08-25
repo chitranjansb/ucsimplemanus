@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { buildIntentDetail } from "../client/src/lib/analytics";
 import { filterProducts, getProduct, getProductGallery, products } from "../client/src/lib/catalog";
-import { addEnquiryItem, removeEnquiryItem } from "../client/src/lib/enquirySelection";
+import { addEnquiryItem, removeEnquiryItem, updateEnquiryItemQuantity } from "../client/src/lib/enquirySelection";
 import { getImageFocalStyle } from "../client/src/lib/imageFocal";
+import { validateRfqFiles } from "../client/src/lib/rfqAttachments";
 
 describe("catalogue and enquiry client helpers", () => {
   it("filters the catalogue by text and category without altering the source collection", () => {
@@ -31,13 +32,25 @@ describe("catalogue and enquiry client helpers", () => {
     expect(getImageFocalStyle({ desktop: { x: 150, y: -12 } })).toMatchObject({ "--image-desktop-position": "100% 0%" });
   });
 
-  it("keeps enquiry selection unique and supports removals", () => {
-    const first = { id: "cabinet" };
-    const second = { id: "table" };
+  it("keeps project selection unique, supports removals, and bounds line-item quantities", () => {
+    const first = { id: "cabinet", quantity: 1 };
+    const second = { id: "table", quantity: 1 };
     const selected = addEnquiryItem([], first);
     expect(addEnquiryItem(selected, first)).toHaveLength(1);
     expect(addEnquiryItem(selected, second)).toEqual([first, second]);
     expect(removeEnquiryItem([first, second], "cabinet")).toEqual([second]);
+    expect(updateEnquiryItemQuantity([first], "cabinet", 0)).toEqual([{ id: "cabinet", quantity: 1 }]);
+    expect(updateEnquiryItemQuantity([first], "cabinet", 900)).toEqual([{ id: "cabinet", quantity: 500 }]);
+  });
+
+  it("rejects unsafe RFQ attachment sets before network submission", () => {
+    const safeFile = { name: "brief.pdf", type: "application/pdf", size: 1200 } as File;
+    const largeFile = { name: "oversized.pdf", type: "application/pdf", size: 1_500_001 } as File;
+    const unsupported = { name: "payload.exe", type: "application/octet-stream", size: 500 } as File;
+    expect(validateRfqFiles([safeFile])).toBeNull();
+    expect(validateRfqFiles([largeFile])).toMatch(/larger than 1.5 MB/);
+    expect(validateRfqFiles([unsupported])).toMatch(/not a supported file type/);
+    expect(validateRfqFiles([safeFile, safeFile, safeFile, safeFile])).toMatch(/up to three/);
   });
 
   it("builds structured analytics details without exposing configuration", () => {

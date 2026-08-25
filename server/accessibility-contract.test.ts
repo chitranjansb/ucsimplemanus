@@ -31,7 +31,9 @@ describe("public-site accessibility contract", () => {
     const layout = readFileSync(resolve(process.cwd(), "client/src/components/SiteLayout.tsx"), "utf8");
     expect(layout).toMatch(/<form className="rfq-form"/);
     expect(layout).toMatch(/<input name={name}/);
-    expect(layout).toMatch(/<select name={name} required>/);
+    expect(layout).toMatch(/<select name={name} required defaultValue=/);
     expect(layout).toMatch(/<textarea name="message"/);
+    expect(layout).toMatch(/role="dialog" aria-modal="true"/);
+    expect(layout).toMatch(/role="alert"/);
   });
 });

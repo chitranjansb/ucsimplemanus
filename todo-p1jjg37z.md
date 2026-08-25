@@ -26,3 +26,9 @@
 - [x] Save a checkpoint and document how to set focal points for future catalogue images.
 - [x] Capture and review desktop focal-point framing across product cards, the homepage, shared editorial heroes, and the product gallery.
 - [x] Save a checkpoint containing the focal-point metadata, responsive rendering, tests, and IMAGE_FOCAL_POINTS.md documentation.
+- [x] Audit the complete project architecture, database, routes, RFQ flow, analytics, SEO, security, assets, tests, dependencies, and production configuration against the attached brief.
+- [x] Run and record baseline type, test, and production-build quality gates before implementing additional production-readiness work.
+- [x] Define a prioritized, fact-safe upgrade plan for scalable catalogue data, B2B RFQ reliability, accessibility, SEO, performance, security, analytics, internationalization, and future CMS readiness.
+- [x] Implement the highest-impact production-readiness improvements without fabricating business or product data.
+- [x] Perform regression, accessibility, performance, and production-build validation; document remaining risks and required business data.
+- [ ] Save a checkpoint and deliver the production-readiness upgrade report.

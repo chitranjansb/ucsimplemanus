@@ -246,6 +246,13 @@ h1, h2, h3 { font-family: "DM Serif Display", Georgia, serif; font-weight: 400; 
 .enquiry-item span { color: var(--ink-soft); font-size: 10px; }
 .enquiry-item button { display: grid; width: 28px; height: 28px; place-items: center; border: 1px solid var(--line); background: transparent; color: var(--ink); }
 .enquiry-item button:hover { background: var(--ink); color: var(--ivory); }
+.project-quantity { display: inline-grid; grid-template-columns: 25px 34px 25px; align-items: center; margin-top: 9px; border: 1px solid var(--line); }
+.project-quantity button { width: 25px; height: 25px; border: 0; border-right: 1px solid var(--line); }
+.project-quantity button:last-child { border-right: 0; border-left: 1px solid var(--line); }
+.project-quantity button:disabled { cursor: not-allowed; opacity: .35; }
+.project-quantity input { width: 100%; min-width: 0; border: 0; background: transparent; color: var(--ink); padding: 0; text-align: center; font: 10px "DM Mono", monospace; }
+.project-quantity input::-webkit-inner-spin-button, .project-quantity input::-webkit-outer-spin-button { margin: 0; appearance: none; }
+.project-summary { margin: 17px 0 0; color: var(--ink-soft); font: 10px/1.5 "DM Mono", monospace; letter-spacing: .03em; text-transform: uppercase; }
 .enquiry-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 290px; color: var(--ink-soft); text-align: center; }
 .enquiry-empty svg { margin-bottom: 13px; color: var(--copper); }
 .enquiry-empty p { margin: 0 0 7px; color: var(--ink); font: 400 26px "DM Serif Display", Georgia, serif; }
@@ -258,11 +265,23 @@ h1, h2, h3 { font-family: "DM Serif Display", Georgia, serif; font-weight: 400; 
 .field input, .field textarea, .field select { width: 100%; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; outline: none; background: transparent; color: var(--ink); padding: 10px 0; font: 13px "DM Sans", sans-serif; letter-spacing: 0; text-transform: none; }
 .field textarea { resize: vertical; }
 .field input:focus, .field textarea:focus, .field select:focus { border-color: var(--copper); }
+.field em { color: var(--ink-soft); font-size: 9px; font-style: normal; }
 .select-wrap { position: relative; }
 .select-wrap select { appearance: none; }
 .select-wrap svg { position: absolute; top: 11px; right: 0; pointer-events: none; color: var(--copper); }
+.rfq-attachments input[type="file"] { border: 1px dashed var(--line); padding: 12px; font-size: 11px; }
+.field-help { display: flex; align-items: flex-start; gap: 7px; color: var(--ink-soft); font: 10px/1.45 "DM Sans", sans-serif; letter-spacing: 0; text-transform: none; }
+.field-help svg { flex: 0 0 auto; margin-top: 1px; color: var(--copper); }
+.attachment-list { display: grid; gap: 4px; color: var(--ink); font: 10px/1.35 "DM Mono", monospace; letter-spacing: 0; text-transform: none; }
+.honeypot { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .form-error { margin: 0 0 14px; color: #9b3026; font-size: 12px; line-height: 1.5; }
 .rfq-form > .text-action { display: flex; margin: 18px auto 0; border: 0; background: transparent; }
+.rfq-review { display: grid; gap: 16px; padding-top: 25px; overflow: auto; }
+.rfq-review > p { margin: 0; color: var(--ink-soft); font-size: 13px; line-height: 1.6; }
+.review-block { display: grid; gap: 5px; border-top: 1px solid var(--line); padding-top: 14px; }
+.review-block > span { color: var(--copper); font: 10px "DM Mono", monospace; letter-spacing: .07em; text-transform: uppercase; }
+.review-block strong { font: 400 21px/1.05 "DM Serif Display", Georgia, serif; }
+.review-block small { color: var(--ink-soft); font-size: 11px; line-height: 1.45; }
 .panel-success { display: flex; flex: 1; flex-direction: column; justify-content: center; align-items: flex-start; }
 .success-mark { display: grid; width: 47px; height: 47px; place-items: center; border-radius: 50%; background: var(--moss); color: var(--ivory); }
 .panel-success h3 { margin: 23px 0 11px; font-size: 37px; line-height: .98; }
