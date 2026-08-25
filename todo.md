@@ -1,0 +1,22 @@
+# Project TODO
+
+- [x] Build a responsive public homepage branded exactly as “Umaid Craftorium”
+- [x] Add clear primary navigation for Collections, Craftsmanship, About, and Inquire
+- [x] Create an editorial hero section with strong primary and secondary calls to action
+- [x] Present the brand story and craftsmanship process through rich editorial sections
+- [x] Present product collections suited to handcrafted furniture and goods without fabricated reviews, ratings, or testimonials
+- [x] Add a dedicated contact and inquiry experience with accessible form controls and business contact paths
+- [x] Add responsive mobile-first layouts and accessible keyboard/focus interactions
+- [x] Add SEO-friendly document title, metadata, semantic landmarks, headings, and descriptive image alt text
+- [x] Add lightweight visual assets or remote image references appropriate for handcrafted goods
+- [x] Add vitest coverage for the inquiry/website behavior that can be tested without browser automation
+- [x] Run type-check, tests, and production build validation
+- [x] Capture desktop and mobile preview screenshots for visual verification
+- [ ] Save the completed first-delivery checkpoint
+- [x] Implement a real inquiry submission path using a mailto handoff with clear success/error handling and contact-link fallbacks
+- [x] Replace empty collection image alt text with descriptive alternatives for meaningful imagery
+- [x] Add behavior-level Vitest coverage for inquiry URL composition and success/error state logic
+- [x] Add explicit mailto handoff error handling and avoid claiming delivery before the user’s email client confirms the handoff
+- [x] Add a database-backed public inquiry submission endpoint with persisted status and UI success/error handling
+- [x] Add behavior tests for inquiry submission success and failure paths
+- [x] Add a Vitest case covering database rejection during inquiry submission

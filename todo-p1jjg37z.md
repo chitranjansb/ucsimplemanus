@@ -1,0 +1,23 @@
+# Project TODO
+
+- [x] Audit the live Umaid Craftorium website, existing project code, and reusable verified imagery.
+- [x] Audit the user-provided Umaid Craftorium Netlify reference for additional verified content, structure, and reusable visual context.
+- [x] Evaluate relevant connected services for additional research and validation support while preserving the verified-facts content standard.
+- [x] Establish a warm, architectural design system for a premium international B2B furniture brand.
+- [x] Build global navigation, responsive footer, mobile menu, enquiry counter, and accessible interaction states.
+- [x] Implement the editorial homepage with verified positioning, collections, craftsmanship, material, project, and enquiry calls to action.
+- [x] Build a filterable collection catalogue with meaningful product and category information only.
+- [x] Build product detail views with gallery interaction, specifications, customization guidance, related products, and enquiry actions.
+- [x] Build content pages for custom furniture, manufacturing, export, about, and contact using verified facts or clearly labeled general workflow; omitted unsupported projects and resources pages.
+- [x] Implement a multi-product enquiry/RFQ flow with form validation, loading, error, success, and empty states.
+- [x] Add SEO fundamentals including semantic markup, titles, descriptions, canonical, robots, sitemap, Open Graph tags, and structured data where factual.
+- [x] Add analytics-ready event helpers for product, catalogue, and contact-intent interactions without exposing secrets.
+- [x] Implement interactive product galleries so thumbnail selection updates the main image, and add an enlarged-image view on product detail pages.
+- [x] Expand analytics instrumentation to cover product views, catalogue search queries, category/filter use, and contact-intent actions consistently across pages.
+- [x] Add and update Vitest coverage for the project’s user-facing logic and validation.
+- [x] Verify desktop and mobile layouts, keyboard paths, contrast, reduced-motion behavior, app build, and tests.
+- [x] Add unit coverage for catalogue filters, enquiry selection state, and analytics event dispatch.
+- [x] Perform and document explicit keyboard focus, contrast, and reduced-motion verification.
+- [x] Record the browser-automation limitation and preserve manual visual QA evidence for the interaction flow.
+- [x] Save a checkpoint; the implementation report, remaining information needs, and deployment notes are documented in IMPLEMENTATION_REPORT.md.
+- [x] Correct unintended image cropping across product cards, galleries, and editorial image containers on desktop and mobile.
