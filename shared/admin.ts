@@ -63,18 +63,41 @@ export const adminMediaUpdateSchema = z.object({
 });
 export const adminMediaIdSchema = z.object({ id: identifierSchema });
 
-export const inquiryStatusSchema = z.enum(["new", "contacted", "closed"]);
+export const inquiryStatusSchema = z.enum(["new", "contacted", "follow_up", "quotation_sent", "negotiation", "won", "lost", "closed"]);
+export type InquiryStatus = z.infer<typeof inquiryStatusSchema>;
+export const inquirySortSchema = z.enum(["newest", "oldest", "updated", "follow_up", "value"]);
 export const adminInquiryListSchema = adminPaginationSchema.extend({
   status: inquiryStatusSchema.optional(),
   assignedToUserId: identifierSchema.optional(),
+  country: z.string().trim().max(160).optional(),
+  collection: slugSchema.max(160).optional(),
+  product: z.string().trim().max(240).optional(),
+  sort: inquirySortSchema.default("newest"),
 });
 export const adminInquiryIdSchema = z.object({ id: identifierSchema });
 export const adminInquiryUpdateSchema = z.object({
   id: identifierSchema,
   status: inquiryStatusSchema.optional(),
   assignedToUserId: identifierSchema.nullable().optional(),
+  nextFollowUpAt: z.coerce.date().nullable().optional(),
+  quotationValue: z.number().finite().min(0).max(999_999_999.99).nullable().optional(),
+  quotationCurrency: z.string().trim().regex(/^[A-Za-z]{3}$/).nullable().optional(),
 });
 export const adminInquiryNoteSchema = z.object({ id: identifierSchema, note: z.string().trim().min(1).max(5_000) });
+
+const inquiryTransitions: Record<InquiryStatus, readonly InquiryStatus[]> = {
+  new: ["contacted", "follow_up", "quotation_sent", "lost"],
+  contacted: ["follow_up", "quotation_sent", "negotiation", "won", "lost", "closed"],
+  follow_up: ["contacted", "quotation_sent", "negotiation", "won", "lost"],
+  quotation_sent: ["follow_up", "negotiation", "won", "lost"],
+  negotiation: ["follow_up", "quotation_sent", "won", "lost"],
+  won: ["closed"],
+  lost: ["new", "closed"],
+  closed: ["new"],
+};
+export function isValidInquiryStatusTransition(from: InquiryStatus, to: InquiryStatus) {
+  return from === to || inquiryTransitions[from].includes(to);
+}
 
 export const adminSiteContentSchema = z.object({
   contentKey: z.enum(["homepage_hero_copy"]),

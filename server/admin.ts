@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, inArray, like, or, sql } from "drizzle-orm";
+import { and, asc, count, countDistinct, desc, eq, inArray, like, lte, or, sql, sum } from "drizzle-orm";
 import {
   catalogCategories,
   catalogFinishes,
@@ -12,6 +12,7 @@ import {
   catalogProducts,
   collections,
   inquiries,
+  inquiryActivities,
   inquiryAttachments,
   inquiryItems,
   inquiryNotes,
@@ -19,7 +20,8 @@ import {
   siteContent,
   users,
 } from "../drizzle/schema";
-import type { AdminProductUpdateInput } from "../shared/admin";
+import type { AdminProductUpdateInput, InquiryStatus } from "../shared/admin";
+import { isValidInquiryStatusTransition } from "../shared/admin";
 import { createCatalogueProduct } from "./catalogue";
 import { getDb } from "./db";
 import { storagePut } from "./storage";
@@ -141,21 +143,28 @@ export async function getAdminDashboard() {
   const monthStart = new Date();
   monthStart.setUTCDate(1);
   monthStart.setUTCHours(0, 0, 0, 0);
-  const [productCount, collectionCount, categoryCount, newEnquiries, monthEnquiries, statusRows] = await Promise.all([
+  const now = new Date();
+  const [productCount, collectionCount, categoryCount, statusRows, quotationTotal, countryRows, collectionRows, productRows] = await Promise.all([
     db.select({ total: count() }).from(catalogProducts).where(sql`${catalogProducts.status} <> 'archived'`),
     db.select({ total: count() }).from(collections).where(eq(collections.status, "active")),
     db.select({ total: count() }).from(catalogCategories).where(eq(catalogCategories.status, "active")),
-    db.select({ total: count() }).from(inquiries).where(eq(inquiries.status, "new")),
-    db.select({ total: count() }).from(inquiries).where(sql`${inquiries.createdAt} >= ${monthStart}`),
     db.select({ status: inquiries.status, total: count() }).from(inquiries).groupBy(inquiries.status),
+    db.select({ total: sum(inquiries.quotationValue) }).from(inquiries),
+    db.select({ label: inquiries.shippingCountry, total: count() }).from(inquiries).where(sql`${inquiries.shippingCountry} IS NOT NULL AND ${inquiries.shippingCountry} <> ''`).groupBy(inquiries.shippingCountry).orderBy(desc(count())).limit(10),
+    db.select({ label: inquiryItems.collectionName, total: countDistinct(inquiryItems.inquiryId) }).from(inquiryItems).where(sql`${inquiryItems.collectionName} IS NOT NULL AND ${inquiryItems.collectionName} <> ''`).groupBy(inquiryItems.collectionName).orderBy(desc(countDistinct(inquiryItems.inquiryId))).limit(10),
+    db.select({ label: inquiryItems.productReference, total: countDistinct(inquiryItems.inquiryId) }).from(inquiryItems).groupBy(inquiryItems.productReference).orderBy(desc(countDistinct(inquiryItems.inquiryId))).limit(10),
   ]);
+  const statusCount = (status: InquiryStatus) => Number(statusRows.find((row) => row.status === status)?.total || 0);
+  const followUpDue = (await db.select({ total: count() }).from(inquiries).where(and(lte(inquiries.nextFollowUpAt, now), sql`${inquiries.status} NOT IN ('follow_up', 'won', 'lost', 'closed')`)))[0]?.total || 0;
   return {
-    products: Number(productCount[0]?.total || 0),
-    collections: Number(collectionCount[0]?.total || 0),
-    categories: Number(categoryCount[0]?.total || 0),
-    newEnquiries: Number(newEnquiries[0]?.total || 0),
-    enquiriesThisMonth: Number(monthEnquiries[0]?.total || 0),
+    products: Number(productCount[0]?.total || 0), collections: Number(collectionCount[0]?.total || 0), categories: Number(categoryCount[0]?.total || 0),
+    newEnquiries: statusCount("new"), enquiriesThisMonth: Number((await db.select({ total: count() }).from(inquiries).where(sql`${inquiries.createdAt} >= ${monthStart}`))[0]?.total || 0),
+    pipeline: { new: statusCount("new"), needingFollowUp: statusCount("follow_up") + Number(followUpDue), quotationSent: statusCount("quotation_sent"), negotiation: statusCount("negotiation"), won: statusCount("won"), lost: statusCount("lost") },
+    quotationTotal: quotationTotal[0]?.total === null ? null : Number(quotationTotal[0]?.total || 0),
     enquiryStatus: statusRows.map((row) => ({ status: row.status, total: Number(row.total) })),
+    byCountry: countryRows.map((row) => ({ label: row.label || "Unknown", total: Number(row.total) })),
+    byCollection: collectionRows.map((row) => ({ label: row.label || "Unknown", total: Number(row.total) })),
+    byProduct: productRows.map((row) => ({ label: row.label, total: Number(row.total) })),
   };
 }
 
@@ -470,20 +479,24 @@ export async function deleteAdminMedia(id: number) {
   return { id, deleted: true };
 }
 
-export async function listAdminEnquiries(input: { page: number; pageSize: number; query?: string; status?: "new" | "contacted" | "closed"; assignedToUserId?: number }) {
+export async function listAdminEnquiries(input: { page: number; pageSize: number; query?: string; status?: InquiryStatus; assignedToUserId?: number; country?: string; collection?: string; product?: string; sort?: "newest" | "oldest" | "updated" | "follow_up" | "value" }) {
   const db = await requireDatabase();
   const conditions = [];
   if (input.status) conditions.push(eq(inquiries.status, input.status));
   if (input.assignedToUserId) conditions.push(eq(inquiries.assignedToUserId, input.assignedToUserId));
+  if (input.country) conditions.push(like(inquiries.shippingCountry, `%${input.country}%`));
   if (input.query) {
     const wildcard = `%${input.query}%`;
-    conditions.push(or(like(inquiries.name, wildcard), like(inquiries.email, wildcard), like(inquiries.company, wildcard), like(inquiries.project, wildcard))!);
+    conditions.push(or(like(inquiries.name, wildcard), like(inquiries.email, wildcard), like(inquiries.company, wildcard), like(inquiries.project, wildcard), like(inquiries.shippingCountry, wildcard))!);
   }
+  if (input.collection) conditions.push(sql`${inquiries.id} IN (SELECT ${inquiryItems.inquiryId} FROM ${inquiryItems} WHERE ${inquiryItems.collectionName} LIKE ${`%${input.collection}%`})`);
+  if (input.product) conditions.push(sql`${inquiries.id} IN (SELECT ${inquiryItems.inquiryId} FROM ${inquiryItems} WHERE ${inquiryItems.productReference} LIKE ${`%${input.product}%`})`);
   const where = conditions.length ? and(...conditions) : undefined;
   const page = pageWindow(input.page, input.pageSize);
+  const orderBy = input.sort === "oldest" ? asc(inquiries.createdAt) : input.sort === "updated" ? desc(inquiries.updatedAt) : input.sort === "follow_up" ? asc(inquiries.nextFollowUpAt) : input.sort === "value" ? desc(inquiries.quotationValue) : desc(inquiries.createdAt);
   const select = { inquiry: inquiries, assigneeName: users.name, assigneeEmail: users.email };
   const [rows, totals] = await Promise.all([
-    db.select(select).from(inquiries).leftJoin(users, eq(inquiries.assignedToUserId, users.id)).where(where).orderBy(desc(inquiries.createdAt)).limit(page.limit).offset(page.offset),
+    db.select(select).from(inquiries).leftJoin(users, eq(inquiries.assignedToUserId, users.id)).where(where).orderBy(orderBy).limit(page.limit).offset(page.offset),
     db.select({ total: count() }).from(inquiries).where(where),
   ]);
   return { items: rows, total: Number(totals[0]?.total || 0), page: input.page, pageSize: input.pageSize };
@@ -493,22 +506,37 @@ export async function getAdminEnquiry(id: number) {
   const db = await requireDatabase();
   const inquiry = (await db.select({ inquiry: inquiries, assigneeName: users.name, assigneeEmail: users.email }).from(inquiries).leftJoin(users, eq(inquiries.assignedToUserId, users.id)).where(eq(inquiries.id, id)).limit(1))[0];
   if (!inquiry) return null;
-  const [items, attachments, notes] = await Promise.all([
+  const [items, attachments, notes, activities] = await Promise.all([
     db.select().from(inquiryItems).where(eq(inquiryItems.inquiryId, id)).orderBy(asc(inquiryItems.createdAt)),
     db.select().from(inquiryAttachments).where(eq(inquiryAttachments.inquiryId, id)).orderBy(asc(inquiryAttachments.createdAt)),
     db.select().from(inquiryNotes).where(eq(inquiryNotes.inquiryId, id)).orderBy(desc(inquiryNotes.createdAt)),
+    db.select().from(inquiryActivities).where(eq(inquiryActivities.inquiryId, id)).orderBy(desc(inquiryActivities.createdAt)),
   ]);
-  return { ...inquiry, items, attachments, notes };
+  return { ...inquiry, items, attachments, notes, activities };
 }
 
-export async function updateAdminEnquiry(input: { id: number; status?: "new" | "contacted" | "closed"; assignedToUserId?: number | null }) {
+export async function updateAdminEnquiry(input: { id: number; status?: InquiryStatus; assignedToUserId?: number | null; nextFollowUpAt?: Date | null; quotationValue?: number | null; quotationCurrency?: string | null }, actor: { id: number; name: string | null }) {
   const db = await requireDatabase();
-  if (input.assignedToUserId) {
+  const current = (await db.select({ status: inquiries.status, assignedToUserId: inquiries.assignedToUserId, nextFollowUpAt: inquiries.nextFollowUpAt, quotationValue: inquiries.quotationValue, quotationCurrency: inquiries.quotationCurrency }).from(inquiries).where(eq(inquiries.id, input.id)).limit(1))[0];
+  if (!current) throw new Error("Enquiry not found.");
+  if (input.assignedToUserId !== undefined && input.assignedToUserId !== null) {
     const assignee = (await db.select({ id: users.id, role: users.role }).from(users).where(eq(users.id, input.assignedToUserId)).limit(1))[0];
     if (!assignee || assignee.role !== "admin") throw new Error("Assigned salesperson must be an active admin user.");
   }
-  const result = await db.update(inquiries).set({ status: input.status, assignedToUserId: input.assignedToUserId }).where(eq(inquiries.id, input.id));
-  if (!result[0].affectedRows) throw new Error("Enquiry not found.");
+  if (input.status && !isValidInquiryStatusTransition(current.status, input.status)) throw new Error(`Invalid enquiry status transition from ${current.status} to ${input.status}.`);
+  const changes: { status?: InquiryStatus; assignedToUserId?: number | null; nextFollowUpAt?: Date | null; quotationValue?: string | null; quotationCurrency?: string | null } = {};
+  if (input.status !== undefined) changes.status = input.status;
+  if (input.assignedToUserId !== undefined) changes.assignedToUserId = input.assignedToUserId;
+  if (input.nextFollowUpAt !== undefined) changes.nextFollowUpAt = input.nextFollowUpAt;
+  if (input.quotationValue !== undefined) changes.quotationValue = input.quotationValue === null ? null : String(input.quotationValue);
+  if (input.quotationCurrency !== undefined) changes.quotationCurrency = input.quotationCurrency === null ? null : input.quotationCurrency.toUpperCase();
+  await db.transaction(async (tx) => {
+    if (Object.keys(changes).length) await tx.update(inquiries).set(changes).where(eq(inquiries.id, input.id));
+    if (input.status && input.status !== current.status) await tx.insert(inquiryActivities).values({ inquiryId: input.id, actorUserId: actor.id, actorName: actor.name || null, activityType: "status_changed", description: `Status changed from ${current.status} to ${input.status}.`, fromStatus: current.status, toStatus: input.status });
+    if (input.assignedToUserId !== undefined && input.assignedToUserId !== current.assignedToUserId) await tx.insert(inquiryActivities).values({ inquiryId: input.id, actorUserId: actor.id, actorName: actor.name || null, activityType: "assigned", description: input.assignedToUserId ? `Assigned to salesperson ${input.assignedToUserId}.` : "Assignment cleared." });
+    if (input.nextFollowUpAt !== undefined) await tx.insert(inquiryActivities).values({ inquiryId: input.id, actorUserId: actor.id, actorName: actor.name || null, activityType: "follow_up_scheduled", description: input.nextFollowUpAt ? `Follow-up scheduled for ${input.nextFollowUpAt.toISOString()}.` : "Follow-up date cleared." });
+    if (input.quotationValue !== undefined || input.quotationCurrency !== undefined) await tx.insert(inquiryActivities).values({ inquiryId: input.id, actorUserId: actor.id, actorName: actor.name || null, activityType: "quotation_updated", description: input.quotationValue === null ? "Quotation value cleared." : "Quotation details updated." });
+  });
   return { id: input.id };
 }
 
@@ -516,8 +544,13 @@ export async function addAdminEnquiryNote(id: number, note: string, user: { id: 
   const db = await requireDatabase();
   const exists = (await db.select({ id: inquiries.id }).from(inquiries).where(eq(inquiries.id, id)).limit(1))[0];
   if (!exists) throw new Error("Enquiry not found.");
-  const result = await db.insert(inquiryNotes).values({ inquiryId: id, authorUserId: user.id, authorName: user.name || null, note });
-  return { id: Number(result[0].insertId) };
+  let noteId = 0;
+  await db.transaction(async (tx) => {
+    const result = await tx.insert(inquiryNotes).values({ inquiryId: id, authorUserId: user.id, authorName: user.name || null, note });
+    noteId = Number(result[0].insertId);
+    await tx.insert(inquiryActivities).values({ inquiryId: id, actorUserId: user.id, actorName: user.name || null, activityType: "note_added", description: "Internal note added." });
+  });
+  return { id: noteId };
 }
 
 export async function listAdminSalespeople() {

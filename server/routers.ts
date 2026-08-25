@@ -283,8 +283,8 @@ export const appRouter = router({
         if (!enquiry) throw new TRPCError({ code: "NOT_FOUND", message: "Enquiry not found." });
         return enquiry;
       }),
-      update: adminProcedure.input(adminInquiryUpdateSchema).mutation(async ({ input }) => {
-        try { return await updateAdminEnquiry(input); } catch (error) { throw asAdminError(error, "Unable to update enquiry."); }
+      update: adminProcedure.input(adminInquiryUpdateSchema).mutation(async ({ input, ctx }) => {
+        try { return await updateAdminEnquiry(input, ctx.user); } catch (error) { throw asAdminError(error, "Unable to update enquiry."); }
       }),
       addNote: adminProcedure.input(adminInquiryNoteSchema).mutation(async ({ input, ctx }) => {
         try { return await addAdminEnquiryNote(input.id, input.note, ctx.user); } catch (error) { throw asAdminError(error, "Unable to add enquiry note."); }

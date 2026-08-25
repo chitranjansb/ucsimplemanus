@@ -103,3 +103,44 @@ describe("admin CMS authorization and contracts", () => {
     expect(adminMocks.deleteAdminProduct).toHaveBeenCalledWith(33);
   });
 });
+
+
+describe("admin CRM router operations", () => {
+  beforeEach(() => Object.values(adminMocks).forEach((mock) => mock.mockReset()));
+
+  it("keeps CRM list and detail data inaccessible to visitors and standard users", async () => {
+    await expect(appRouter.createCaller(visitorContext).admin.enquiries.list({ page: 1, pageSize: 20, sort: "newest" })).rejects.toThrow(/permission/i);
+    await expect(appRouter.createCaller(standardContext).admin.enquiries.byId({ id: 21 })).rejects.toThrow(/permission/i);
+    expect(adminMocks.listAdminEnquiries).not.toHaveBeenCalled();
+    expect(adminMocks.getAdminEnquiry).not.toHaveBeenCalled();
+  });
+
+  it("passes bounded CRM filters, sorting, and pagination to the protected service", async () => {
+    adminMocks.listAdminEnquiries.mockResolvedValueOnce({ items: [], total: 0, page: 2, pageSize: 10 });
+    await expect(appRouter.createCaller(adminContext).admin.enquiries.list({ page: 2, pageSize: 10, query: "hotel", status: "quotation_sent", country: "France", collection: "storage", product: "cabinet", sort: "value" })).resolves.toMatchObject({ page: 2, pageSize: 10 });
+    expect(adminMocks.listAdminEnquiries).toHaveBeenCalledWith(expect.objectContaining({ page: 2, pageSize: 10, status: "quotation_sent", country: "France", collection: "storage", product: "cabinet", sort: "value" }));
+  });
+
+  it("protects and forwards assignment, pipeline, follow-up, and quotation changes with the admin actor", async () => {
+    await expect(appRouter.createCaller(visitorContext).admin.enquiries.update({ id: 21, status: "won" })).rejects.toThrow(/permission/i);
+    adminMocks.updateAdminEnquiry.mockResolvedValueOnce({ id: 21 });
+    const input = { id: 21, status: "quotation_sent" as const, assignedToUserId: 7, nextFollowUpAt: new Date("2026-09-01T10:00:00.000Z"), quotationValue: 12500, quotationCurrency: "EUR" };
+    await expect(appRouter.createCaller(adminContext).admin.enquiries.update(input)).resolves.toEqual({ id: 21 });
+    expect(adminMocks.updateAdminEnquiry).toHaveBeenCalledWith(input, expect.objectContaining({ id: 7, role: "admin" }));
+  });
+
+  it("validates CRM update fields before the protected service is called", async () => {
+    await expect(appRouter.createCaller(adminContext).admin.enquiries.update({ id: 21, quotationValue: -1 })).rejects.toThrow();
+    await expect(appRouter.createCaller(adminContext).admin.enquiries.update({ id: 21, quotationCurrency: "EURO" })).rejects.toThrow();
+    await expect(appRouter.createCaller(adminContext).admin.enquiries.update({ id: 21, status: "not-a-status" as never })).rejects.toThrow();
+    expect(adminMocks.updateAdminEnquiry).not.toHaveBeenCalled();
+  });
+
+  it("returns private activity history only through the protected enquiry detail procedure", async () => {
+    const privateDetail = { inquiry: { id: 21, status: "follow_up" }, items: [], attachments: [], notes: [], activities: [{ id: 1, activityType: "status_changed", description: "Status changed." }] };
+    adminMocks.getAdminEnquiry.mockResolvedValueOnce(privateDetail);
+    await expect(appRouter.createCaller(adminContext).admin.enquiries.byId({ id: 21 })).resolves.toMatchObject({ activities: [{ activityType: "status_changed" }] });
+    expect(adminMocks.getAdminEnquiry).toHaveBeenCalledWith(21);
+    await expect(appRouter.createCaller(visitorContext).admin.enquiries.byId({ id: 21 })).rejects.toThrow(/permission/i);
+  });
+});

@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertInquiry, InsertUser, inquiries, inquiryAttachments, inquiryItems, users } from "../drizzle/schema";
+import { InsertInquiry, InsertUser, inquiries, inquiryActivities, inquiryAttachments, inquiryItems, users } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -93,6 +93,7 @@ export async function createProjectInquiry(input: {
     const result = await tx.insert(inquiries).values(input.inquiry);
     const inquiryId = Number(result[0].insertId);
     if (!Number.isInteger(inquiryId) || inquiryId < 1) throw new Error("Unable to create inquiry");
+    await tx.insert(inquiryActivities).values({ inquiryId, activityType: "created", description: "RFQ received from public enquiry form." });
 
     if (input.items.length) {
       await tx.insert(inquiryItems).values(input.items.map((item) => ({

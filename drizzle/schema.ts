@@ -247,12 +247,16 @@ export const inquiries = mysqlTable("inquiries", {
   customizationRequirements: text("customizationRequirements"),
   message: text("message").notNull(),
   metadata: json("metadata").$type<Record<string, unknown>>(),
-  status: mysqlEnum("status", ["new", "contacted", "closed"]).default("new").notNull(),
+  status: mysqlEnum("status", ["new", "contacted", "follow_up", "quotation_sent", "negotiation", "won", "lost", "closed"]).default("new").notNull(),
   assignedToUserId: int("assignedToUserId"),
+  quotationValue: decimal("quotationValue", { precision: 14, scale: 2 }),
+  quotationCurrency: varchar("quotationCurrency", { length: 3 }),
+  nextFollowUpAt: timestamp("nextFollowUpAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => [
   index("inquiries_status_created_idx").on(table.status, table.createdAt),
+  index("inquiries_follow_up_idx").on(table.status, table.nextFollowUpAt),
   index("inquiries_assigned_created_idx").on(table.assignedToUserId, table.createdAt),
 ]);
 
@@ -290,6 +294,22 @@ export const inquiryNotes = mysqlTable("inquiry_notes", {
 }, (table) => [index("inquiry_notes_inquiry_created_idx").on(table.inquiryId, table.createdAt)]);
 
 /** Deliberately bounded content blocks that map to existing public copy areas only. */
+/** Append-only internal sales timeline; this table is never exposed through public procedures. */
+export const inquiryActivities = mysqlTable("inquiry_activities", {
+  id: int("id").autoincrement().primaryKey(),
+  inquiryId: int("inquiryId").notNull(),
+  actorUserId: int("actorUserId"),
+  actorName: varchar("actorName", { length: 200 }),
+  activityType: mysqlEnum("activityType", ["created", "status_changed", "assigned", "note_added", "follow_up_scheduled", "quotation_updated"]).notNull(),
+  description: varchar("description", { length: 500 }).notNull(),
+  fromStatus: varchar("fromStatus", { length: 40 }),
+  toStatus: varchar("toStatus", { length: 40 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => [
+  index("inquiry_activities_inquiry_created_idx").on(table.inquiryId, table.createdAt),
+  index("inquiry_activities_actor_created_idx").on(table.actorUserId, table.createdAt),
+]);
+
 export const siteContent = mysqlTable("site_content", {
   id: int("id").autoincrement().primaryKey(),
   contentKey: varchar("contentKey", { length: 120 }).notNull(),
@@ -313,3 +333,4 @@ export type CatalogProductVariant = typeof catalogProductVariants.$inferSelect;
 export type CatalogProductSpecification = typeof catalogProductSpecifications.$inferSelect;
 export type MediaAsset = typeof mediaAssets.$inferSelect;
 export type InquiryNote = typeof inquiryNotes.$inferSelect;
+export type InquiryActivity = typeof inquiryActivities.$inferSelect;
