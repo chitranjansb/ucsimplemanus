@@ -9,3 +9,16 @@ export function readComparisonStorage(storage: Pick<Storage, "getItem">) {
 export function writeComparisonStorage(storage: Pick<Storage, "setItem">, ids: string[]) {
   storage.setItem(COMPARISON_STORAGE_KEY, JSON.stringify(normalizeComparisonProducts(ids)));
 }
+
+export function parseSharedComparisonIds(search: string) {
+  return normalizeComparisonProducts(new URLSearchParams(search.startsWith("?") ? search.slice(1) : search).get("products")?.split(",") || []);
+}
+
+export function buildSharedComparisonUrl(origin: string, ids: string[]) {
+  const normalized = normalizeComparisonProducts(ids);
+  return `${origin.replace(/\/$/, "")}/compare?products=${encodeURIComponent(normalized.join(","))}`;
+}
+
+export function buildSharedRfqUrl(origin: string, ids: string[]) {
+  return `${buildSharedComparisonUrl(origin, ids)}&rfq=1`;
+}

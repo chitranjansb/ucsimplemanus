@@ -127,6 +127,19 @@ async function hydrateProducts(productRows: Array<{ product: typeof catalogProdu
   });
 }
 
+export async function getCatalogueFacets() {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const [collectionRows, categoryRows, materialRows, finishRows] = await Promise.all([
+    db.select({ slug: collections.slug, name: collections.name }).from(collections).where(eq(collections.status, "active")).orderBy(asc(collections.sortOrder), asc(collections.name)),
+    db.select({ slug: catalogCategories.slug, name: catalogCategories.name }).from(catalogCategories).where(eq(catalogCategories.status, "active")).orderBy(asc(catalogCategories.sortOrder), asc(catalogCategories.name)),
+    db.select({ slug: catalogMaterials.slug, name: catalogMaterials.name }).from(catalogProductMaterials).innerJoin(catalogMaterials, eq(catalogProductMaterials.materialId, catalogMaterials.id)).innerJoin(catalogProducts, eq(catalogProductMaterials.productId, catalogProducts.id)).where(eq(catalogProducts.status, "published")).orderBy(asc(catalogMaterials.name)),
+    db.select({ slug: catalogFinishes.slug, name: catalogFinishes.name }).from(catalogProductFinishes).innerJoin(catalogFinishes, eq(catalogProductFinishes.finishId, catalogFinishes.id)).innerJoin(catalogProducts, eq(catalogProductFinishes.productId, catalogProducts.id)).where(eq(catalogProducts.status, "published")).orderBy(asc(catalogFinishes.name)),
+  ]);
+  const unique = (rows: Array<{ slug: string; name: string }>) => Array.from(new Map(rows.map((row) => [row.slug, row])).values());
+  return { collections: collectionRows, categories: categoryRows, materials: unique(materialRows), finishes: unique(finishRows), availability: ["available", "on_request", "discontinued"] as const };
+}
+
 export async function listCatalogueProducts(input: CatalogueListInput = {}) {
   const db = await getDb();
   if (!db) throw new Error("Database is not available");

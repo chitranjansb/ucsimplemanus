@@ -1,13 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { createCatalogueProductMock, getCatalogueProductBySlugMock, listCatalogueProductsMock } = vi.hoisted(() => ({
+const { createCatalogueProductMock, getCatalogueFacetsMock, getCatalogueProductBySlugMock, listCatalogueProductsMock } = vi.hoisted(() => ({
   createCatalogueProductMock: vi.fn(),
+  getCatalogueFacetsMock: vi.fn(),
   getCatalogueProductBySlugMock: vi.fn(),
   listCatalogueProductsMock: vi.fn(),
 }));
 
 vi.mock("./catalogue", () => ({
   createCatalogueProduct: createCatalogueProductMock,
+  getCatalogueFacets: getCatalogueFacetsMock,
   getCatalogueProductBySlug: getCatalogueProductBySlugMock,
   listCatalogueProducts: listCatalogueProductsMock,
 }));
@@ -41,6 +43,7 @@ const productInput = {
 describe("structured catalogue contracts", () => {
   beforeEach(() => {
     createCatalogueProductMock.mockReset();
+    getCatalogueFacetsMock.mockReset();
     getCatalogueProductBySlugMock.mockReset();
     listCatalogueProductsMock.mockReset();
   });
@@ -75,6 +78,15 @@ describe("structured catalogue contracts", () => {
     expect(result.collection).toBe("Mosaic");
     expect(result.variants[0]?.variantCode).toBe("cabinet-standard");
     expect(result.specifications[0]?.value).toBe("Specifications available on request");
+  });
+
+  it("returns server-side browse facets without hydrating product records", async () => {
+    getCatalogueFacetsMock.mockResolvedValueOnce({ collections: [{ slug: "mosaic", name: "Mosaic" }], categories: [{ slug: "storage", name: "Storage" }], materials: [{ slug: "wood", name: "Wood" }], finishes: [], availability: ["available", "on_request", "discontinued"] });
+    const result = await appRouter.createCaller(visitorContext).catalogue.facets();
+    expect(result.collections[0]?.slug).toBe("mosaic");
+    expect(result.categories[0]?.name).toBe("Storage");
+    expect(result.availability).toContain("on_request");
+    expect(getCatalogueFacetsMock).toHaveBeenCalledOnce();
   });
 
   it("passes category and text search filters to the catalogue service", async () => {

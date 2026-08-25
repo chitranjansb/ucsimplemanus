@@ -66,3 +66,9 @@
 - [x] Build accessible comparison and catalogue filter/search UI plus international RFQ fields and unit-aware product dimensions while preserving the existing visual language.
 - [x] Add tests for comparison operations and persistence, search/filter combinations and URL state, sorting/empty results, international RFQ validation, unit conversion, and RFQ compatibility.
 - [x] Run final type checks, tests, production build, responsive/accessibility verification, checkpoint, and catalogue upgrade handoff.
+
+- [x] Audit current international phone handling, catalogue facet availability, comparison persistence, RFQ state, and route architecture for the follow-up improvements.
+- [x] Design shared contracts for country-aware phone validation, server-side catalogue facets, and privacy-safe shareable comparison/RFQ shortlist links.
+- [x] Implement country-aware phone validation, server-side catalogue facets, and shareable shortlist persistence without exposing private RFQ data or secrets.
+- [x] Integrate the follow-up controls into the RFQ, catalogue, and comparison interfaces with accessible responsive presentation.
+- [x] Add tests for phone validation, facet retrieval, share-link privacy/persistence, and existing RFQ/catalogue regressions; run final checks, build, visual QA, checkpoint, and handoff.

@@ -6,10 +6,11 @@ import { getImageFocalStyle } from "../client/src/lib/imageFocal";
 import { validateRfqFiles } from "../client/src/lib/rfqAttachments";
 import { getAdminRouteState } from "../client/src/lib/adminAccess";
 import { addComparisonProduct, clearComparisonProducts, normalizeComparisonProducts, removeComparisonProduct } from "../client/src/lib/comparisonSelection";
-import { COMPARISON_STORAGE_KEY, readComparisonStorage, writeComparisonStorage } from "../client/src/lib/comparisonStorage";
+import { buildSharedComparisonUrl, buildSharedRfqUrl, COMPARISON_STORAGE_KEY, parseSharedComparisonIds, readComparisonStorage, writeComparisonStorage } from "../client/src/lib/comparisonStorage";
 import { filterCatalogueProducts } from "../client/src/lib/catalog";
 import { parseCatalogueQuery, serializeCatalogueQuery } from "../client/src/lib/catalogueQuery";
 import { formatDimensionValue, formatWeightValue } from "../client/src/lib/units";
+import { validateInternationalPhone } from "../client/src/lib/phone";
 
 describe("catalogue and enquiry client helpers", () => {
   it("filters the catalogue by text and category without altering the source collection", () => {
@@ -81,6 +82,16 @@ describe("catalogue and enquiry client helpers", () => {
     expect(compared.reduce((items, product) => addEnquiryItem(items, { id: product.id, name: product.name, collection: product.collection, image: product.image, quantity: 1 }), rfqItems)).toHaveLength(2);
   });
 
+  it("builds a bounded public shortlist link that carries only product IDs", () => {
+    const url = buildSharedComparisonUrl("https://umaidcraftorium.example/", ["one", "one", "two", "three", "four", "five"]);
+    expect(url).toBe("https://umaidcraftorium.example/compare?products=one%2Ctwo%2Cthree%2Cfour");
+    expect(parseSharedComparisonIds(new URL(url).search)).toEqual(["one", "two", "three", "four"]);
+    const rfqUrl = buildSharedRfqUrl("https://umaidcraftorium.example", ["one", "two"]);
+    expect(rfqUrl).toBe("https://umaidcraftorium.example/compare?products=one%2Ctwo&rfq=1");
+    expect(rfqUrl).not.toContain("email");
+    expect(url).not.toContain("company");
+  });
+
   it("persists comparison IDs through localStorage so navigation/remount restores the shortlist", () => {
     const values = new Map<string, string>();
     const storage = { getItem: (key: string) => values.get(key) || null, setItem: (key: string, value: string) => values.set(key, value) };
@@ -105,6 +116,14 @@ describe("catalogue and enquiry client helpers", () => {
     expect(parseCatalogueQuery(`?${serializeCatalogueQuery(state)}`)).toEqual(state);
     expect(formatDimensionValue("100 cm x 50 cm", "imperial")).toBe("39.4 in x 19.7 in");
     expect(formatWeightValue(null, "imperial")).toBe("Available on request");
+  });
+
+  it("validates international phone formats with conservative country-aware rules", () => {
+    expect(validateInternationalPhone("+39 02 555 0101", "Italy")).toBeNull();
+    expect(validateInternationalPhone("+91 98765 43210", "India")).toBeNull();
+    expect(validateInternationalPhone("020 555 0101", "Italy")).toMatch(/country code/i);
+    expect(validateInternationalPhone("+39 1234567", "Italy")).toMatch(/digits/i);
+    expect(validateInternationalPhone("+999 12345678", "A country not in the short rule list")).toBeNull();
   });
 
   it("keeps the client admin route behind explicit loading, authentication, and role gates", () => {

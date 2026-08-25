@@ -2,7 +2,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { internationalRfqFieldsSchema } from "../shared/rfq";
-import { createCatalogueProduct, getCatalogueProductBySlug, listCatalogueProducts } from "./catalogue";
+import { createCatalogueProduct, getCatalogueFacets, getCatalogueProductBySlug, listCatalogueProducts } from "./catalogue";
 import {
   addAdminEnquiryNote,
   archiveAdminCategory,
@@ -154,6 +154,7 @@ export const appRouter = router({
   }),
   catalogue: router({
     list: publicProcedure.input(catalogueListSchema.optional()).query(({ input }) => listCatalogueProducts(input ?? {})),
+    facets: publicProcedure.query(() => getCatalogueFacets()),
     bySlug: publicProcedure.input(productSlugSchema).query(async ({ input }) => {
       const product = await getCatalogueProductBySlug(input.slug);
       if (!product) throw new TRPCError({ code: "NOT_FOUND", message: "Catalogue reference not found." });
