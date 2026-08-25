@@ -25,4 +25,4 @@
 - [x] Add unit coverage and responsive visual verification for focal-point configuration behavior.
 - [x] Save a checkpoint and document how to set focal points for future catalogue images.
 - [x] Capture and review desktop focal-point framing across product cards, the homepage, shared editorial heroes, and the product gallery.
-- [ ] Save a checkpoint containing the focal-point metadata, responsive rendering, tests, and IMAGE_FOCAL_POINTS.md documentation.
+- [x] Save a checkpoint containing the focal-point metadata, responsive rendering, tests, and IMAGE_FOCAL_POINTS.md documentation.
