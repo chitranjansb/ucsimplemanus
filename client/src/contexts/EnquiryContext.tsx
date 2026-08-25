@@ -9,6 +9,7 @@ type EnquiryContextValue = {
   items: ProjectEnquiryItem[];
   isOpen: boolean;
   addItem: (product: Product) => void;
+  addItems: (products: Product[]) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearItems: () => void;
@@ -58,6 +59,10 @@ export function EnquiryProvider({ children }: { children: React.ReactNode }) {
     isOpen,
     addItem: (product) => {
       setItems((current) => addEnquiryItem(current, { id: product.id, name: product.name, collection: product.collection, image: product.image, quantity: 1 }));
+      setIsOpen(true);
+    },
+    addItems: (products) => {
+      setItems((current) => products.reduce((next, product) => addEnquiryItem(next, { id: product.id, name: product.name, collection: product.collection, image: product.image, quantity: 1 }), current));
       setIsOpen(true);
     },
     removeItem: (id) => setItems((current) => removeEnquiryItem(current, id)),

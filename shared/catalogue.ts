@@ -94,7 +94,12 @@ export const catalogueListSchema = z.object({
   finish: slugSchema.max(160).optional(),
   featured: z.boolean().optional(),
   isNew: z.boolean().optional(),
-  limit: z.number().int().min(1).max(100).default(24),
+  customizable: z.boolean().optional(),
+  availability: z.enum(["available", "on_request", "discontinued"]).optional(),
+  sort: z.enum(["featured", "newest", "name_asc", "name_desc"]).default("featured"),
+  page: z.number().int().min(1).default(1),
+  pageSize: z.number().int().min(1).max(100).default(24),
+  limit: z.number().int().min(1).max(100).optional(),
 });
 
 export const productSlugSchema = z.object({ slug: slugSchema });

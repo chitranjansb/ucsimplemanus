@@ -2,8 +2,10 @@ import { Meta, SiteFrame } from "@/components/SiteLayout";
 import { ProductCard } from "@/components/ProductCard";
 import { getProduct, getProductGallery, getRelatedProducts } from "@/lib/catalog";
 import { useEnquiry } from "@/contexts/EnquiryContext";
+import { useComparison } from "@/contexts/ComparisonContext";
 import { trackIntent } from "@/lib/analytics";
 import { getImageFocalStyle } from "@/lib/imageFocal";
+import { formatDimensionValue, formatWeightValue, type DisplayUnit } from "@/lib/units";
 import { breadcrumbStructuredData, productStructuredData } from "@/lib/seo";
 import { trpc } from "@/lib/trpc";
 import { ArrowLeft, ArrowRight, Check, ChevronRight, Download, Plus } from "lucide-react";
@@ -14,8 +16,10 @@ export default function ProductDetail({ id }: { id: string }) {
   const productQuery = trpc.catalogue.bySlug.useQuery({ slug: id }, { retry: false });
   const product = productQuery.data || getProduct(id);
   const { addItem, items, openEnquiry } = useEnquiry();
+  const { add: addComparison, remove: removeComparison, has: hasComparison } = useComparison();
   const [activeImage, setActiveImage] = useState(0);
   const [zoomed, setZoomed] = useState(false);
+  const [unit, setUnit] = useState<DisplayUnit>("metric");
   useEffect(() => {
     if (product) trackIntent("product_view", { product: product.id, collection: product.collection });
   }, [product]);
@@ -28,7 +32,7 @@ export default function ProductDetail({ id }: { id: string }) {
   const specifications = product.specifications?.filter((specification) => !specification.variantCode) || [];
   const variants = product.variants || [];
   const logistics = [
-    product.weightKg !== null && product.weightKg !== undefined ? { label: "Weight", value: `${product.weightKg} kg` } : null,
+    product.weightKg !== null && product.weightKg !== undefined ? { label: "Weight", value: formatWeightValue(product.weightKg, unit) } : null,
     product.moq ? { label: "MOQ", value: String(product.moq) } : null,
     product.cbm !== null && product.cbm !== undefined ? { label: "CBM", value: String(product.cbm) } : null,
     product.packagingInfo ? { label: "Packaging", value: product.packagingInfo } : null,
@@ -46,9 +50,9 @@ export default function ProductDetail({ id }: { id: string }) {
         <div className="product-detail__copy">
           <p className="eyebrow">{product.collection} collection</p><h1>{product.name}</h1><p className="product-detail__lede">{product.shortDescription || product.description}</p>
           <dl className="product-specs">
-            <div><dt>Category</dt><dd>{product.category}</dd></div><div><dt>Material / finish</dt><dd>{product.finish ? `${product.material} · ${product.finish}` : product.material}</dd></div><div><dt>Dimensions</dt><dd>{product.dimensions}</dd></div><div><dt>Availability</dt><dd>{availability}</dd></div><div><dt>Customisation</dt><dd>{product.customizable ? "Customisation available on request." : "Discuss project requirements with the trade desk."}</dd></div>
+            <div><dt>Category</dt><dd>{product.category}</dd></div><div><dt>Material / finish</dt><dd>{product.finish ? `${product.material} · ${product.finish}` : product.material}</dd></div><div><dt>Dimensions</dt><dd>{formatDimensionValue(product.dimensions, unit)}</dd></div><div><dt>Availability</dt><dd>{availability}</dd></div><div><dt>Customisation</dt><dd>{product.customizable ? "Customisation available on request." : "Discuss project requirements with the trade desk."}</dd></div>
           </dl>
-          <div className="product-detail__actions"><button type="button" className={`button button--dark ${selected ? "is-selected" : ""}`} onClick={() => { addItem(product); trackIntent("add_to_enquiry", { product: product.id, source: "product_detail" }); }}>{selected ? <><Check size={17} /> Added to enquiry</> : <><Plus size={17} /> Add to enquiry</>}</button><button type="button" className="button button--outline" onClick={() => { trackIntent("request_quote", { product: product.id }); openEnquiry(); }}>Request a quote <ArrowRight size={17} /></button></div><p className="product-detail__note"><Download size={14} /> Detailed specifications and technical documents are available on request where supported.</p>
+          <div className="product-detail__actions"><button type="button" className={`button button--dark ${selected ? "is-selected" : ""}`} onClick={() => { addItem(product); trackIntent("add_to_enquiry", { product: product.id, source: "product_detail" }); }}>{selected ? <><Check size={17} /> Added to enquiry</> : <><Plus size={17} /> Add to enquiry</>}</button><button type="button" className="button button--outline" onClick={() => { trackIntent("request_quote", { product: product.id }); openEnquiry(); }}>Request a quote <ArrowRight size={17} /></button><button type="button" className="button button--outline" onClick={() => { if (hasComparison(product.id)) removeComparison(product.id); else addComparison(product); }} aria-pressed={hasComparison(product.id)}>{hasComparison(product.id) ? "Remove from compare" : "Compare product"}</button></div><label className="unit-toggle"><span>Display units</span><select value={unit} onChange={(event) => setUnit(event.target.value as DisplayUnit)} aria-label="Choose product display units"><option value="metric">Metric</option><option value="imperial">Imperial</option></select></label><p className="product-detail__note"><Download size={14} /> Detailed specifications and technical documents are available on request where supported.</p>
         </div>
       </div>
     </section>

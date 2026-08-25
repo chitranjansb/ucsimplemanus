@@ -43,6 +43,13 @@
       "when": 1787662484337,
       "tag": "0005_premium_madrox",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1787664249430,
+      "tag": "0006_furry_the_fallen",
+      "breakpoints": true
     }
   ]
 }

@@ -1,6 +1,7 @@
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { EnquiryProvider } from "@/contexts/EnquiryContext";
+import { ComparisonProvider } from "@/contexts/ComparisonContext";
 import { Route, Switch } from "wouter";
 import { lazy, Suspense } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -13,6 +14,7 @@ const CapabilityPage = lazy(() => import("./pages/CapabilityPage"));
 const Contact = lazy(() => import("./pages/Contact"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Admin = lazy(() => import("./pages/Admin"));
+const Compare = lazy(() => import("./pages/Compare"));
 
 function Router() {
   return (
@@ -20,6 +22,7 @@ function Router() {
       <Route path="/admin/:section/:id" component={Admin} />
       <Route path="/admin/:section" component={Admin} />
       <Route path="/admin" component={Admin} />
+      <Route path="/compare" component={Compare} />
       <Route path="/" component={Home} />
       <Route path="/collections" component={Collections} />
       <Route path="/collections/:id">{(params) => <ProductDetail id={params.id} />}</Route>
@@ -40,7 +43,7 @@ export default function App() {
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster />
-          <EnquiryProvider><Suspense fallback={<main className="route-loading" aria-live="polite">Loading Umaid Craftorium…</main>}><Router /></Suspense></EnquiryProvider>
+          <EnquiryProvider><ComparisonProvider><Suspense fallback={<main className="route-loading" aria-live="polite">Loading Umaid Craftorium…</main>}><Router /></Suspense></ComparisonProvider></EnquiryProvider>
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

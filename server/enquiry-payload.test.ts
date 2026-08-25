@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildRfqPayload } from "../shared/enquiry";
+import { internationalRfqFieldsSchema } from "../shared/rfq";
 
 describe("buildRfqPayload", () => {
   it("combines buyer context and selected catalogue products into the persisted enquiry payload", () => {
@@ -20,6 +21,12 @@ describe("buildRfqPayload", () => {
     expect(payload.message).toContain("Carved Storage Cabinet (Mosaic), Accent Side Table (Patina)");
     expect(payload.message).toContain("Quantity: 32 pieces");
     expect(payload.message).toContain("Requirements: Need a durable dining and storage programme");
+  });
+
+  it("validates international RFQ fields without inventing shipping or commercial values", () => {
+    expect(internationalRfqFieldsSchema.parse({ destinationCity: "Milan", destinationCountry: "Italy", destinationPort: "Genoa", estimatedOrderQuantity: 24, preferredUnits: "metric", exportRequirements: "Please advise on required export documentation." })).toMatchObject({ destinationCountry: "Italy", estimatedOrderQuantity: 24, preferredUnits: "metric" });
+    expect(() => internationalRfqFieldsSchema.parse({ estimatedOrderQuantity: 0 })).toThrow();
+    expect(() => internationalRfqFieldsSchema.parse({ preferredUnits: "feet" })).toThrow();
   });
 
   it("keeps general enquiries useful when no catalogue product has been selected", () => {

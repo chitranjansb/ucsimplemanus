@@ -150,14 +150,19 @@ export async function listCatalogueProducts(input: CatalogueListInput = {}) {
   }
   if (input.featured !== undefined) conditions.push(eq(catalogProducts.featured, input.featured));
   if (input.isNew !== undefined) conditions.push(eq(catalogProducts.isNew, input.isNew));
+  if (input.customizable !== undefined) conditions.push(eq(catalogProducts.customizable, input.customizable));
+  if (input.availability) conditions.push(eq(catalogProducts.availability, input.availability));
   if (query) {
     const wildcard = `%${query}%`;
-    conditions.push(or(like(catalogProducts.title, wildcard), like(catalogProducts.slug, wildcard), like(catalogProducts.description, wildcard), like(collections.name, wildcard), like(catalogCategories.name, wildcard))!);
+    conditions.push(or(like(catalogProducts.title, wildcard), like(catalogProducts.slug, wildcard), like(catalogProducts.sku, wildcard), like(catalogProducts.productCode, wildcard), like(catalogProducts.description, wildcard), like(catalogProducts.materials, wildcard), like(catalogProducts.finishes, wildcard), like(collections.name, wildcard), like(catalogCategories.name, wildcard))!);
   }
+  const orderBy = input.sort === "name_asc" ? [asc(catalogProducts.title)] : input.sort === "name_desc" ? [desc(catalogProducts.title)] : input.sort === "newest" ? [desc(catalogProducts.isNew), desc(catalogProducts.createdAt), asc(catalogProducts.title)] : [desc(catalogProducts.featured), desc(catalogProducts.isNew), asc(catalogProducts.title)];
+  const pageSize = input.limit ?? input.pageSize ?? 24;
+  const offset = ((input.page ?? 1) - 1) * pageSize;
   const rows = await db.select({ product: catalogProducts, collectionName: collections.name, collectionSlug: collections.slug, categoryName: catalogCategories.name }).from(catalogProducts)
     .leftJoin(collections, eq(catalogProducts.collectionId, collections.id))
     .leftJoin(catalogCategories, eq(catalogProducts.primaryCategoryId, catalogCategories.id))
-    .where(and(...conditions)).orderBy(desc(catalogProducts.featured), desc(catalogProducts.isNew), asc(catalogProducts.title)).limit(input.limit ?? 24);
+    .where(and(...conditions)).orderBy(...orderBy).limit(pageSize).offset(offset);
 
   return hydrateProducts(rows);
 }

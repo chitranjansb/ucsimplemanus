@@ -59,3 +59,10 @@
 - [x] Run final type checks, tests, production build, responsive verification, checkpoint, and CRM handoff.
 كان
 
+
+- [x] Audit current catalogue filtering, normalized product fields, comparison opportunities, RFQ fields/persistence, routing, local storage, and relevant tests.
+- [x] Design shared comparison state, scalable search/filter contracts, URL query state, international RFQ fields, and metric/imperial unit conversion without duplicating product data.
+- [x] Implement comparison persistence and limits, debounced URL-aware catalogue search/filtering/sorting/pagination, and validated international RFQ schema/API extensions.
+- [x] Build accessible comparison and catalogue filter/search UI plus international RFQ fields and unit-aware product dimensions while preserving the existing visual language.
+- [x] Add tests for comparison operations and persistence, search/filter combinations and URL state, sorting/empty results, international RFQ validation, unit conversion, and RFQ compatibility.
+- [x] Run final type checks, tests, production build, responsive/accessibility verification, checkpoint, and catalogue upgrade handoff.

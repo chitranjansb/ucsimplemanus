@@ -40,6 +40,29 @@ describe("inquiries.create", () => {
     });
   });
 
+  it("passes validated international buyer fields through the existing RFQ persistence contract", async () => {
+    createProjectInquiryMock.mockResolvedValueOnce({ id: 28 });
+    const result = await appRouter.createCaller(context).inquiries.create({
+      name: "Marta Buyer",
+      email: "marta@example.com",
+      company: "Northline Studio",
+      phone: "+39 02 555 0101",
+      projectType: "Container order",
+      shippingCountry: "Italy",
+      destinationCity: "Milan",
+      destinationCountry: "Italy",
+      destinationPort: "Genoa",
+      estimatedOrderQuantity: 48,
+      containerRequirement: "Please advise",
+      preferredDeliveryPeriod: "Q4",
+      preferredUnits: "imperial",
+      exportRequirements: "Please confirm required export documents.",
+      message: "Please advise on a furniture programme for a hospitality project.",
+    });
+    expect(result).toEqual({ success: true, inquiryId: 28 });
+    expect(createProjectInquiryMock).toHaveBeenCalledWith(expect.objectContaining({ inquiry: expect.objectContaining({ destinationCity: "Milan", destinationCountry: "Italy", destinationPort: "Genoa", estimatedOrderQuantity: 48, preferredUnits: "imperial", exportRequirements: "Please confirm required export documents." }) }));
+  });
+
   it("surfaces a database failure for a valid enquiry", async () => {
     createProjectInquiryMock.mockRejectedValueOnce(new Error("database unavailable"));
     await expect(appRouter.createCaller(context).inquiries.create({

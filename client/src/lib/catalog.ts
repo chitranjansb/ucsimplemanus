@@ -139,15 +139,25 @@ export function getRelatedProducts(product: Product) {
   return products.filter((candidate) => candidate.id !== product.id && candidate.category === product.category).slice(0, 3);
 }
 
-export function filterProducts(query: string, category: (typeof productCategories)[number], catalogue: Product[] = products, collectionSlug?: string) {
-  const normalizedQuery = query.trim().toLowerCase();
-  return catalogue.filter((product) => {
-    const matchesCategory = category === "All" || product.category === category;
-    const productCollectionSlug = product.collectionSlug || product.collection.toLowerCase().replace(/\s+/g, "-");
-    const matchesCollection = !collectionSlug || productCollectionSlug === collectionSlug;
-    const matchesQuery = [product.name, product.collection, product.category].join(" ").toLowerCase().includes(normalizedQuery);
-    return matchesCategory && matchesCollection && matchesQuery;
+export type CatalogueSort = "featured" | "newest" | "name_asc" | "name_desc";
+export type CatalogueFilters = { query?: string; collection?: string; category?: string; material?: string; finish?: string; availability?: Product["availability"]; customizable?: boolean; isNew?: boolean; featured?: boolean; sort?: CatalogueSort };
+
+function slugify(value: string) { return value.trim().toLowerCase().replace(/\s+/g, "-"); }
+
+export function filterCatalogueProducts(filters: CatalogueFilters = {}, catalogue: Product[] = products) {
+  const normalizedQuery = filters.query?.trim().toLowerCase() || "";
+  const filtered = catalogue.filter((product) => {
+    const productCollectionSlug = product.collectionSlug || slugify(product.collection);
+    const materialText = [product.material, ...(product.materials || [])].join(" ");
+    const finishText = [product.finish || "", ...(product.finishes || [])].join(" ");
+    const searchText = [product.name, product.sku || "", product.productCode || "", product.collection, product.category, materialText, finishText].join(" ").toLowerCase();
+    return (!filters.collection || productCollectionSlug === filters.collection) && (!filters.category || product.category.toLowerCase() === filters.category.toLowerCase() || product.categories?.some((category) => category.slug === filters.category)) && (!filters.material || materialText.toLowerCase().includes(filters.material.replace(/-/g, " ").toLowerCase())) && (!filters.finish || finishText.toLowerCase().includes(filters.finish.replace(/-/g, " ").toLowerCase())) && (!filters.availability || product.availability === filters.availability) && (filters.customizable === undefined || product.customizable === filters.customizable) && (filters.isNew === undefined || product.isNew === filters.isNew) && (filters.featured === undefined || product.featured === filters.featured) && (!normalizedQuery || searchText.includes(normalizedQuery));
   });
+  return [...filtered].sort((a, b) => filters.sort === "name_desc" ? b.name.localeCompare(a.name) : filters.sort === "name_asc" ? a.name.localeCompare(b.name) : filters.sort === "newest" ? Number(Boolean(b.isNew)) - Number(Boolean(a.isNew)) || a.name.localeCompare(b.name) : Number(Boolean(b.featured)) - Number(Boolean(a.featured)) || Number(Boolean(b.isNew)) - Number(Boolean(a.isNew)) || a.name.localeCompare(b.name));
+}
+
+export function filterProducts(query: string, category: (typeof productCategories)[number], catalogue: Product[] = products, collectionSlug?: string) {
+  return filterCatalogueProducts({ query, category: category === "All" ? undefined : category, collection: collectionSlug }, catalogue);
 }
 
 export function getProductGallery(product: Product, catalogue: Product[] = products) {

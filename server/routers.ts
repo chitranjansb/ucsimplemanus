@@ -1,6 +1,7 @@
 import { COOKIE_NAME } from "@shared/const";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { internationalRfqFieldsSchema } from "../shared/rfq";
 import { createCatalogueProduct, getCatalogueProductBySlug, listCatalogueProducts } from "./catalogue";
 import {
   addAdminEnquiryNote,
@@ -139,7 +140,7 @@ const enquirySchema = z.object({
   attachments: z.array(attachmentSchema).max(MAX_ATTACHMENTS).default([]),
   submittedAt: z.number().int().positive().optional(),
   website: z.string().max(200).optional().default(""),
-});
+}).merge(internationalRfqFieldsSchema);
 
 export const appRouter = router({
   system: systemRouter,
@@ -196,8 +197,16 @@ export const appRouter = router({
           project,
           projectType: input.projectType || null,
           shippingCountry: input.shippingCountry || null,
+          destinationCity: input.destinationCity || null,
+          destinationCountry: input.destinationCountry || null,
+          destinationPort: input.destinationPort || null,
           targetMarket: input.targetMarket || null,
           timeline: input.timeline || null,
+          estimatedOrderQuantity: input.estimatedOrderQuantity ?? null,
+          containerRequirement: input.containerRequirement || null,
+          preferredDeliveryPeriod: input.preferredDeliveryPeriod || null,
+          preferredUnits: input.preferredUnits || null,
+          exportRequirements: input.exportRequirements || null,
           customizationRequirements: input.customizationRequirements || null,
           message: input.message,
           metadata: { source: "public_project_enquiry", itemCount: input.items.length, attachmentCount: uploadedAttachments.length },
