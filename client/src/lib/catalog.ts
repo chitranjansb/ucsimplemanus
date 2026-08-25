@@ -1,20 +1,43 @@
-export type ProductCategory = "Dining" | "Living" | "Bedroom" | "Bathroom" | "Outdoor" | "Storage";
+export type ProductCategory = string;
 
 import type { ImageFocalPoint } from "@/lib/imageFocal";
 
 export type Product = {
   id: string;
+  databaseId?: number;
+  sku?: string | null;
+  productCode?: string | null;
+  slug?: string;
   name: string;
   collection: string;
+  collectionSlug?: string | null;
   category: ProductCategory;
+  categories?: Array<{ slug: string; name: string; primary: boolean }>;
   material: string;
+  materials?: string[];
+  finish?: string | null;
+  finishes?: string[];
   description: string;
+  shortDescription?: string | null;
   dimensions: string;
+  weightKg?: number | null;
+  moq?: number | null;
+  packagingInfo?: string | null;
+  cbm?: number | null;
+  customizable?: boolean;
+  status?: "draft" | "published" | "archived";
+  availability?: "available" | "on_request" | "discontinued";
   image: string;
   imageAlt: string;
   /** Sets product placement inside fixed editorial frames; values are percentages from the image’s top-left corner. */
   imageFocal?: ImageFocalPoint;
   featured?: boolean;
+  isNew?: boolean;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  media?: Array<{ id: number; url: string; alt: string; role: "hero" | "gallery" | "detail"; sortOrder: number; focal: ImageFocalPoint }>;
+  specifications?: Array<{ key: string; label: string; value: string; unit: string | null; sortOrder: number; variantCode: string | null }>;
+  variants?: Array<{ variantCode: string; sku: string | null; name: string | null; material: string | null; finish: string | null; dimensions: string | null; weightKg: number | null; moq: number | null; packagingInfo: string | null; cbm: number | null; availability: "available" | "on_request" | "discontinued" }>;
 };
 
 export const collections = [
@@ -116,12 +139,14 @@ export function getRelatedProducts(product: Product) {
   return products.filter((candidate) => candidate.id !== product.id && candidate.category === product.category).slice(0, 3);
 }
 
-export function filterProducts(query: string, category: (typeof productCategories)[number], catalogue: Product[] = products) {
+export function filterProducts(query: string, category: (typeof productCategories)[number], catalogue: Product[] = products, collectionSlug?: string) {
   const normalizedQuery = query.trim().toLowerCase();
   return catalogue.filter((product) => {
     const matchesCategory = category === "All" || product.category === category;
+    const productCollectionSlug = product.collectionSlug || product.collection.toLowerCase().replace(/\s+/g, "-");
+    const matchesCollection = !collectionSlug || productCollectionSlug === collectionSlug;
     const matchesQuery = [product.name, product.collection, product.category].join(" ").toLowerCase().includes(normalizedQuery);
-    return matchesCategory && matchesQuery;
+    return matchesCategory && matchesCollection && matchesQuery;
   });
 }
 

@@ -4,14 +4,17 @@ import { useEnquiry } from "@/contexts/EnquiryContext";
 import { products } from "@/lib/catalog";
 import { trackIntent } from "@/lib/analytics";
 import { getImageFocalStyle } from "@/lib/imageFocal";
+import { trpc } from "@/lib/trpc";
 import { ArrowDownRight, ArrowRight, Check, ChevronRight, Globe2, Layers3, Sparkles } from "lucide-react";
 import { Link } from "wouter";
 
 export default function Home() {
   const { openEnquiry } = useEnquiry();
-  const featured = products.filter((product) => product.featured);
-  const heroProduct = products.find((product) => product.id === "patterned-sideboard") ?? products[0];
-  const customFeatureProduct = products.find((product) => product.id === "carved-storage-cabinet") ?? products[0];
+  const featuredQuery = trpc.catalogue.list.useQuery({ featured: true, limit: 6 }, { retry: false });
+  const catalogue = featuredQuery.data || products;
+  const featured = catalogue.filter((product) => product.featured);
+  const heroProduct = catalogue.find((product) => product.id === "patterned-sideboard") ?? products.find((product) => product.id === "patterned-sideboard") ?? products[0];
+  const customFeatureProduct = catalogue.find((product) => product.id === "carved-storage-cabinet") ?? products.find((product) => product.id === "carved-storage-cabinet") ?? products[0];
 
   return <SiteFrame>
     <Meta title="Trade furniture from Jodhpur" description="Umaid Craftorium is a trade-only furniture manufacturer, wholesale supplier, and exporter in Jodhpur, India." />

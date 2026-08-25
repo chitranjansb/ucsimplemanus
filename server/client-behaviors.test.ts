@@ -9,6 +9,7 @@ describe("catalogue and enquiry client helpers", () => {
   it("filters the catalogue by text and category without altering the source collection", () => {
     expect(filterProducts("cabinet", "All").map((product) => product.id)).toContain("carved-storage-cabinet");
     expect(filterProducts("", "Living").every((product) => product.category === "Living")).toBe(true);
+    expect(filterProducts("", "All", products, "mosaic").map((product) => product.id)).toEqual(["carved-storage-cabinet"]);
     expect(products).toHaveLength(5);
   });
 

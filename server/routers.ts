@@ -1,11 +1,13 @@
 import { COOKIE_NAME } from "@shared/const";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { createCatalogueProduct, getCatalogueProductBySlug, listCatalogueProducts } from "./catalogue";
 import { createProjectInquiry } from "./db";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+import { adminProcedure, publicProcedure, router } from "./_core/trpc";
 import { storagePut } from "./storage";
+import { catalogueListSchema, productCreateSchema, productSlugSchema } from "../shared/catalogue";
 
 const MAX_ATTACHMENT_BYTES = 1_500_000;
 const MAX_ATTACHMENTS = 3;
@@ -89,6 +91,21 @@ export const appRouter = router({
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
       return { success: true } as const;
+    }),
+  }),
+  catalogue: router({
+    list: publicProcedure.input(catalogueListSchema.optional()).query(({ input }) => listCatalogueProducts(input ?? {})),
+    bySlug: publicProcedure.input(productSlugSchema).query(async ({ input }) => {
+      const product = await getCatalogueProductBySlug(input.slug);
+      if (!product) throw new TRPCError({ code: "NOT_FOUND", message: "Catalogue reference not found." });
+      return product;
+    }),
+    create: adminProcedure.input(productCreateSchema).mutation(async ({ input }) => {
+      try {
+        return await createCatalogueProduct(input);
+      } catch (error) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: error instanceof Error ? error.message : "Unable to create product." });
+      }
     }),
   }),
   inquiries: router({

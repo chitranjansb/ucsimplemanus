@@ -35,3 +35,10 @@
 - [x] Commit the completed production-readiness upgrade to the connected GitHub repository and push it to the configured branch.
 - [x] Pull request creation was not possible because the existing main branch has unrelated history; the user selected the safely pushed production-readiness branch as the delivery path.
 - [x] Confirm the preserved `production-readiness-upgrade` GitHub branch and provide its review link as the final handoff.
+- [x] Audit the current catalogue references, database tables, APIs, RFQ flow, page components, routes, and tests before extending the domain.
+- [x] Design a normalized fact-safe product model for product codes, category, collection, material, finish, variants, media, specifications, logistics, availability, customisation, and SEO.
+- [x] Add a safe indexed database migration and migrate existing reference catalogue records without deleting or fabricating product facts.
+- [x] Add strongly typed Zod-validated catalogue API procedures for retrieval, filtering, search, relationships, product variants, and product creation validation.
+- [x] Update catalogue pages, product details, related products, RFQ selection, and metadata to consume the structured model while preserving public routes and visual design.
+- [x] Add automated coverage for product validation, retrieval, filtering, search, collection relationships, variants, invalid data, and existing RFQ behavior.
+- [x] Run final type checks, tests, production build, responsive visual validation, checkpoint, and implementation handoff.
